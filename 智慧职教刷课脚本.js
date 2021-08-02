@@ -688,7 +688,7 @@
                                     moduleId: e.moduleId
                                 }
                                 let re = await ajaxPost(url["viewDirectorys"], nowCourseObj.viewDirectory);
-                                Console(`获取进度[${++is}/${e.childNodeList.length}][${index}+1/${List.length}]`);
+                                Console(`获取进度[${++is}/${e.childNodeList.length}][${index+1}/${List.length}]`);
                                 if (re.cellPercent != 100) {
                                     await stuProcessCellLog(re);
                                 }
