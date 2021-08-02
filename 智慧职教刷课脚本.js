@@ -423,6 +423,9 @@
                 <span style="color:red;">修改速度过快可能导致被检测而异常</span>
                 <span style="color:red;">已限定修改范围，请酌情修改</span>
             </div>
+            <div class="menu-item" >
+                <span id="clear-info">点我清除页面信息</span>
+            </div>
         </div>
     </div>
         `
@@ -916,7 +919,10 @@
                 Console("已暂停脚本运行");
                 isPause = 0;
             }
-        })
+        });
+        $("#clear-info").click(function(){
+            $consoleInfoItem.html("");
+        });
         $leftBtn.click(function() {
             $contentLeft.attr("on") == "on" ? $contentLeft.removeAttr("on") : (() => {
                 $contentLeft.attr("on", "on");
