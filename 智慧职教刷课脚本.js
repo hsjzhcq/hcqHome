@@ -867,8 +867,7 @@
             }
             switch (id) {
                 case "ajax-set":
-                    ajaxSpeed = 1000 * setV;
-                    speed = ajaxSpeed;
+                    speed = 1000 * setV;
                     Console(`请求发送速度修改成功,当前速度${ajaxSpeed/1000}s`);
                     break;
                 case "dom-set":
