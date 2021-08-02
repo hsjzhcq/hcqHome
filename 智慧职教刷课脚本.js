@@ -1,7 +1,7 @@
 /*
  * @Author: hcq
  * @Date: 2021-08-02 14:15:49
- * @LastEditTime: 2021-08-02 14:17:14
+ * @LastEditTime: 2021-08-02 15:06:40
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @version:1.0
@@ -22,6 +22,7 @@
         },
         speed = 2000, //执行速度
         ajaxSpeed = speed, //ajax发送与内容添加速度
+        isPause = 1,
         errorNum = 0, //错误次数
         pauseNode = "", //存放暂停函数节点
         domRequestSpeed = speed, //文档请求速度
@@ -429,18 +430,22 @@
     function ajaxPost(url, date) {
         return new Promise((res, rej) => {
             setTimeout(() => {
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: date,
-                    dataType: "json",
-                    success: function(data) {
-                        res(data);
-                    },
-                    error: function(xhr) {
-                        rej(xhr);
-                    }
-                });
+                if (isPause == 0) {
+                    rej("已暂停运行");
+                } else {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: date,
+                        dataType: "json",
+                        success: function(data) {
+                            res(data);
+                        },
+                        error: function(xhr) {
+                            rej(xhr);
+                        }
+                    })
+                }
             }, ajaxSpeed)
         })
     }
@@ -466,9 +471,8 @@
             if (errorNum > 3) {
                 console.error(`获取课程失败，请刷新后在重试`);
                 pauseNode = fn;
-                console.log(pauseNode)
             } else {
-                console.log(`正在尝试重新获取第${errorNum}次`);
+                Console(`正在尝试重新获取第${errorNum}次`);
                 fn();
             }
         })
@@ -581,11 +585,6 @@
                 }
                 Console(await new Promise(r => { setTimeOut(() => { r(`正在获取本课程小节信息`) }) }));
                 for (let [i, e] of module.entries()) {
-                    console.log("speed:" + speed)
-                    console.log("ajaxSpeed:" + ajaxSpeed)
-                    console.log("domRequestSpeed:" + domRequestSpeed)
-                    console.log("videoRequestSpeed:" + videoRequestSpeed)
-                    console.log("videoAddSpeed:" + videoAddSpeed)
                     if (i >= index) {
                         let res = await ajaxPost(url["getTopicByModuleIds"], {
                             courseOpenId: nowCourseObj.courseOpenId,
@@ -772,7 +771,6 @@
             } catch (e) {
                 Console(`修改异常:${e}`)
             }
-            console.log("type:" + type)
             if (type != 0) {
                 let time = 0,
                     sp = videoAddSpeed;
@@ -904,6 +902,7 @@
             if ($(this).attr("type") != "paused") {
                 $(this).attr("type", "paused");
                 $(this).text("暂停");
+                isPause = 1;
                 if (pauseNode != "") {
                     Console("已启动脚本运行")
                     pauseNode();
@@ -913,8 +912,8 @@
             } else {
                 $(this).removeAttr("type", "paused");
                 $(this).text("运行");
-                Console("已暂停脚本运行")
-                return 0
+                Console("已暂停脚本运行");
+                isPause = 0;
             }
         })
         $leftBtn.click(function() {
@@ -930,7 +929,6 @@
         });
         window.onresize = function() {
             if (window.matchMedia("(max-width:1148px)").matches) {
-                console.log($contentRight.attr("on"))
                 if ($contentRight.attr("on") == "on") {
                     $rightBtn.click();
                 }
