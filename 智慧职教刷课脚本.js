@@ -776,12 +776,15 @@
                 let time = 0,
                     sp = videoAddSpeed;
                 for (let i = 1; i <= type; i++) {
-                    if (type > 1) {
+                    if (type = 1) {
+                        time= res.pageCount;
+                    }else if(type>1){
                         time = parseInt((sp * i) + newTime);
                         if ((time + sp) >= len) {
                             time = len;
                         }
                     }
+                        
                     let r = await ajaxPost(url["stuProcessCellLog"], {
                         courseOpenId: nowCourseObj.courseOpenId,
                         openClassId: nowCourseObj.openClassId,
