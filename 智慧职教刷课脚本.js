@@ -1,10 +1,10 @@
 /*
  * @Author: hcq
  * @Date: 2021-08-02 14:15:49
- * @LastEditTime: 2021-08-04 16:49:37
+ * @LastEditTime: 2021-08-04 19:18:46
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @version:1.1
+ * @version:1.0
  * @FilePath: https://gitee.com/hcqHome/zjyScript
  */
 (() => {
@@ -30,7 +30,7 @@
         videoRequestSpeed = 10000, //视频请求速度
         videoAddSpeed = 15, //视频增加速度
         nowCourseObj = {
-            index: 0, //当前课程索引
+            index: -1, //当前课程索引(因为在执行过程中会先自增,所以-1自增后会为0)
             courseName: "", //课程名字
             courseOpenId: "", //课程Id
             openClassId: "", //班级ID
@@ -669,8 +669,7 @@
                                             nowCourseObj.temporaryIndex = 0;
                                             clearInterval(tiemOut);
                                             $changeCourse.click();
-                                            setNowCourseObj(unfinishedList[nowCourseObj.index]);
-                                            getProcessLists();
+                                            getCourseLists();
                                         } else {
                                             $countDown.text(index);
                                             index--;
@@ -903,6 +902,9 @@
                 len = 0,
                 type = 0,
                 newTime = res.stuStudyNewlyTime;
+            if (name == undefined) {
+                throw 0
+            }
             if (name == "视频" || name == "音频") {
                 len = res.audioVideoLong;
             } else {
@@ -1145,7 +1147,7 @@
             nowCourseObj.temporaryIndex = 0;
             nowCourseObj.temporaryList = [];
             nowCourseObj.stuProcess = {};
-            nowCourseObj.index = +$(this).data("index") - 1;
+            nowCourseObj.index = +$(this).data("index");
             $changeCourse.click();
             $countDown.parent().remove();
             setTimeOut(() => {
