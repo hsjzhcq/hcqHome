@@ -1,10 +1,10 @@
 /*
  * @Author: hcq
  * @Date: 2021-08-02 14:15:49
- * @LastEditTime: 2021-08-02 15:06:40
+ * @LastEditTime: 2021-08-04 16:49:37
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @version:1.0
+ * @version:1.1
  * @FilePath: https://gitee.com/hcqHome/zjyScript
  */
 (() => {
@@ -20,6 +20,7 @@
             stuProcessCellLog: `https://zjy2.icve.com.cn/api/common/Directory/stuProcessCellLog`,
             changeStuStudyProcessCellData: `https://zjy2.icve.com.cn/api/common/Directory/changeStuStudyProcessCellData`
         },
+        tiemOut = null, //5分钟后重试定时器存放
         speed = 2000, //执行速度
         ajaxSpeed = speed, //ajax发送与内容添加速度
         isPause = 1,
@@ -38,12 +39,16 @@
             unCourseList: [], //待完成课程列表
             temporaryList: [], //临时列表(用于存放已经读取过的信息)
             temporaryIndex: 0, //临时索引(用于重新加载模块后从该索引开始继续获取信息)
-            viewDirectory: {} //临时存放viewDirectory的数据
+            viewDirectory: {
+                flag: "s"
+            }, //临时存放viewDirectory的数据
+            stuProcess: {} //临时存放stuProcess需要的数据
         },
         style = /*模块样式*/ `
         #hcq-content {
             position: fixed;
             width: 90%;
+            min-width: 320px;
             height: 90%;
             left: 0;
             top: 0;
@@ -71,6 +76,11 @@
             transition: all .35s;
         }
         
+        .user-name,
+        .stuNum {
+            background-color: rgba(255, 255, 255, .75);
+        }
+        
         #hcq-content-left {
             width: 180px;
             box-shadow: 1px 0 6px #666;
@@ -90,10 +100,7 @@
             border-radius: 5px;
             object-fit: cover;
         }
-        .user-name,
-        .stuNum {
-            background-color: rgba(255, 255, 255, .75);
-        }
+        
         .left-item {
             position: relative;
             margin: .5rem 0;
@@ -129,9 +136,69 @@
             scroll-behavior: smooth;
         }
         
-        #console-info span {
+        .info-box>span {
             display: block;
             border-bottom: 1px dashed #2ECD71;
+        }
+        
+        #console-info>.coures-menu {
+            position: absolute;
+            top:0;
+            display: none;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            background-color: #ccc;
+        }
+        
+        #console-info>.coures-menu[show=show] {
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+        
+        .coures-menu>.menu-box {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            width: 20%;
+        }
+        
+        .menu-box>div {
+            position: relative;
+            width: 120px;
+            height: 140px;
+            flex-shrink: 0;
+            margin: .5rem;
+            border-radius: 5px;
+            background-color: rgb(114, 93, 233);
+            box-shadow: 0 0 5px #666;
+            color: #fff;
+        }
+        
+        .menu-box>div>div {
+            position: absolute; 
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            right: 0;
+            background-color: #0aec6960;
+        }
+        
+        .menu-box>div>img {
+            width: 100%;
+            height: 120px;
+            border-radius: 5px;
+            object-fit: cover;
+            box-sizing: border-box;
+            border: 1px solid #000;
+        }
+        
+        .menu-box>div>span {
+            display: block;
+            padding: 0 !important;
+            text-align: center;
+            font-size: 12px;
         }
         
         #console-info::-webkit-scrollbar {
@@ -302,6 +369,35 @@
             text-align: center;
         }
         
+        .menu-item.flex {
+            pointer-events: none;
+        }
+        
+        .menu-item.flex>div {
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+            line-height: 60px;
+            background-color: rgba(0, 0, 0, .25);
+            user-select: none;
+            cursor: pointer;
+        }
+        
+        .menu-item.flex[on=on] {
+            pointer-events: all;
+        }
+        
+        .menu-item.flex[on=on]>div {
+            background-color: rgba(255, 255, 255, .75);
+        }
+        
+        .flex {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
         @media all and (max-width:1148px) {
             .right-btn {
                 position: absolute;
@@ -320,6 +416,18 @@
             #hcq-content-right {
                 position: absolute;
                 right: -260px;
+            }
+        }
+        
+        @media all and (max-width:1026px) {
+            .coures-menu>.menu-box {
+                width: 25%;
+            }
+        }
+        
+        @media all and (max-width:846px) {
+            .coures-menu>.menu-box {
+                width: 33.33%;
             }
         }
         
@@ -343,6 +451,15 @@
             #hcq-content-left[on=on]+.left-btn>span {
                 transform: rotate(180deg);
             }
+            .coures-menu>.menu-box {
+                width: 25%;
+            }
+        }
+        
+        @media all and (max-width:648px) {
+            .coures-menu>.menu-box {
+                width: 33.33%;
+            }
         }
         
         @media all and (max-width:480px) {
@@ -351,19 +468,22 @@
                 height: 90%;
                 left: 0;
             }
+            .coures-menu>.menu-box {
+                width: 50%;
+            }
         }
         `,
         divs = /*模块节点*/ `
         <div id="hcq-content">
         <div id="hcq-content-left">
-            <img src="http://q1.qlogo.cn/g?b=qq&nk=2533094475&s=640" alt="用户头像">
+            <img src="" alt="用户头像">
             <div class="left-item">
                 <span>用户名</span>
-                <span class="user-name text-ellipsis">2533094475</span>
+                <span class="user-name text-ellipsis">1234567890</span>
             </div>
             <div class="left-item">
                 <span>学号</span>
-                <span class="stuNum text-ellipsis">2533094475</span>
+                <span class="stuNum text-ellipsis">1234567890</span>
             </div>
             <div class="left-item">
                 <div class="switch-platform btn">
@@ -388,7 +508,10 @@
         </div>
         <div id="hcq-main">
             <div id="console-info">
-                <div></div>
+                <div class="info-box"></div>
+                <div class="coures-menu">
+                <span style="display: block;width: 100%;text-align: center;">请在<tiem>15</tiem>秒内选择课程，过时自动选择</span>
+                </div>
             </div>
         </div>
         <div id="hcq-content-right">
@@ -423,8 +546,14 @@
                 <span style="color:red;">修改速度过快可能导致被检测而异常</span>
                 <span style="color:red;">已限定修改范围，请酌情修改</span>
             </div>
-            <div class="menu-item" >
+            <div class="menu-item">
                 <span id="clear-info">点我清除页面信息</span>
+            </div>
+            <div class="menu-item flex">
+                <div class="change-course">更换课程</div>
+                <div class="jump-dom">跳过文档</div>
+                <div class="jump-video">跳过视频</div>
+                <div class="jump-this">跳过本节</div>
             </div>
         </div>
     </div>
@@ -466,20 +595,6 @@
         nowCourseObj.openCourseCellCount = openCourseCellCount;
         nowCourseObj.moduleId = moduleId;
     }
-
-    function setError(e, fn) {
-        console.error(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
-        errorNum++;
-        setTimeOut(() => {
-            if (errorNum > 3) {
-                console.error(`获取课程失败，请刷新后在重试`);
-                pauseNode = fn;
-            } else {
-                Console(`正在尝试重新获取第${errorNum}次`);
-                fn();
-            }
-        })
-    }
     if (document.querySelector("#hcq-content") == null) {
         $("head>style").eq(0).append(style);
         $("body").eq(0).append(divs);
@@ -487,27 +602,36 @@
     $(function() {
         let $btn = $(".btn"),
             $switchBtn = $(".switch-platform").eq(0),
-            switchBox = document.querySelector(".switch-box");
-        $switchBoxLis = $(switchBox).find("li"),
+            $switchBoxLis = $(".switch-box").find("li"),
             $contentLeft = $("#hcq-content-left"),
             $contentRight = $("#hcq-content-right"),
             $leftBtn = $(".left-btn"),
             $rightBtn = $(".right-btn"),
             $consoleInfo = $("#console-info"),
-            $consoleInfoItem = $consoleInfo.children("div"),
+            $consoleInfoItem = $consoleInfo.children(".info-box"),
             $run = $(".mian-run"),
-            $speedSet = $contentRight.find("input[type=text]");
+            $speedSet = $contentRight.find("input[type=text]"),
+            $couresMenu = $(".coures-menu"),
+            $countDown = $couresMenu.find("tiem"),
+            $changeCourse = $(".change-course"),
+            $jumpDom = $(".jump-dom"),
+            $jumpVideo = $(".jump-video"),
+            $jumpThis = $(".jump-this");
         async function getCourseLists() { //获取课程列表
             try {
+                pauseNode = getCourseLists;
                 if (nowCourseObj.unCourseList.length != 0) {
-                    setNowCourseObj(nowCourseObj.unCourseList[++nowCourseObj.index])
-                    getProcessLists();
+                    setNowCourseObj(nowCourseObj.unCourseList[++nowCourseObj.index]);
+                    setTimeOut(() => {
+                        getProcessLists();
+                    })
                 } else {
                     Console('正在获取课程列表中');
                     let data = await ajaxPost(url["getLearnningCourseLists"]),
                         List = data.courseList,
                         finished = 0,
-                        unfinishedList = [];
+                        unfinishedList = [],
+                        index = 0;
                     setTimeOut(() => {
                         Console(`获取到课程列表${List.length}门`);
                         List.forEach(e => {
@@ -515,9 +639,17 @@
                                 unfinishedList.push({
                                     courseName: e.courseName,
                                     courseOpenId: e.courseOpenId,
-                                    openClassId: e.openClassId,
-                                    process: e.process
-                                })
+                                    openClassId: e.openClassId
+                                });
+                                $couresMenu.append(`
+                                <div class="menu-box" data-index=${index}>
+                                    <div>
+                                        <div class="flex">${e.process}</div>
+                                        <img src="${e.thumbnail}">
+                                        <span class="text-ellipsis">${e.courseName}</span>
+                                    </div>
+                                </div>`);
+                                index++;
                             } else {
                                 finished++;
                             }
@@ -525,22 +657,40 @@
                         nowCourseObj.unCourseList = unfinishedList;
                         setTimeOut(() => {
                             Console(`其中已完成课程有${finished}门课程，未完成课程为${List.length-finished}门课程`);
+                            errorNum = 0;
                             setTimeOut(() => {
-                                errorNum = 0;
-                                setNowCourseObj(unfinishedList[nowCourseObj.index])
-                                getProcessLists();
+                                Console(`正在载入未完成课程,请稍后。。。`);
+                                setTimeOut(() => {
+                                    $couresMenu.attr("show", "show");
+                                    $(".menu-item.flex").attr("on", "on");
+                                    index = (nowCourseObj.temporaryIndex = 15);
+                                    tiemOut = setInterval(() => {
+                                        if (index <= 0) {
+                                            nowCourseObj.temporaryIndex = 0;
+                                            clearInterval(tiemOut);
+                                            $changeCourse.click();
+                                            setNowCourseObj(unfinishedList[nowCourseObj.index]);
+                                            getProcessLists();
+                                        } else {
+                                            $countDown.text(index);
+                                            index--;
+                                        }
+                                    }, 1000);
+                                });
                             });
                         });
                     });
                 }
+                nowCourseObj.viewDirectory.courseOpenId = nowCourseObj.courseOpenId;
+                nowCourseObj.viewDirectory.openClassId = nowCourseObj.openClassId;
             } catch (e) {
-                setError(e, getCourseLists);
+                setError(e);
             }
         }
         async function getProcessLists() { //获取列表进度
             try {
-
-                Console(`当前课程名称${nowCourseObj.courseName}`)
+                pauseNode = getProcessLists;
+                Console(`当前课程名称${nowCourseObj.courseName}`);
                 let data = await ajaxPost(url["getProcessLists"], {
                         courseOpenId: nowCourseObj.courseOpenId,
                         openClassId: nowCourseObj.openClassId
@@ -574,18 +724,17 @@
                     });
                 });
             } catch (e) {
-                setError(e, getProcessLists);
+                setError(e);
             }
         }
         async function getTopicByModuleIds() {
             try {
+                pauseNode = getTopicByModuleIds;
                 Console(`准备获取本课程小节信息`);
                 let List = [],
                     index = nowCourseObj.temporaryIndex,
                     module = nowCourseObj.temporaryList;
-                if (index != 0) {
-                    Console(`正在重新获取进度`);
-                }
+                fnRetry(index);
                 Console(await new Promise(r => { setTimeOut(() => { r(`正在获取本课程小节信息`) }) }));
                 for (let [i, e] of module.entries()) {
                     if (i >= index) {
@@ -610,19 +759,18 @@
                     getCellByTopicIds();
                 })
             } catch (e) {
-                setError(e, getTopicByModuleIds);
+                setError(e);
             }
         }
         async function getCellByTopicIds() {
             try {
+                pauseNode = getCellByTopicIds;
                 Console(`已获取本课程组件列表`);
                 Console(await new Promise(r => { setTimeOut(() => { r(`准备获取课程组件节点`) }) }));
                 let nodeList = [],
                     index = nowCourseObj.temporaryIndex,
                     List = nowCourseObj.temporaryList;
-                if (index != 0) {
-                    Console(`正在重新获取进度`);
-                }
+                fnRetry(index);
                 for (let [i, e] of List.entries()) {
                     if (i >= index) {
                         let res = await ajaxPost(url["getCellByTopicIds"], {
@@ -669,52 +817,59 @@
                     });
                 });
             } catch (e) {
-                setError(e, getCellByTopicIds);
+                setError(e);
             }
         }
 
         async function viewDirectorys() {
             try {
+                pauseNode = viewDirectorys;
                 let index = nowCourseObj.temporaryIndex,
-                    List = nowCourseObj.temporaryList;
+                    List = nowCourseObj.temporaryList,
+                    obj = nowCourseObj.stuProcess,
+                    len = List.length;
+                fnRetry(index);
                 Console(`准备获取当前小节`);
                 for (let [i, e] of List.entries()) {
                     if (i >= index) {
+                        nowCourseObj.viewDirectory.moduleId = e.moduleId;
                         if (e.categoryName == "子节点") {
-                            let is = 0;
+                            let is = 0,
+                                nodeLen = e.childNodeList.length;
                             for (let v of e.childNodeList) {
-                                nowCourseObj.viewDirectory = {
-                                    courseOpenId: nowCourseObj.courseOpenId,
-                                    openClassId: nowCourseObj.openClassId,
-                                    cellId: v.Id,
-                                    flag: "s",
-                                    moduleId: e.moduleId
-                                }
-                                let re = await ajaxPost(url["viewDirectorys"], nowCourseObj.viewDirectory);
-                                Console(`获取进度[${++is}/${e.childNodeList.length}][${index+1}/${List.length}]`);
-                                if (re.cellPercent != 100) {
-                                    await stuProcessCellLog(re);
+                                Console(`获取进度[${++is}/${nodeLen}][${index+1}/${len}]`);
+                                if (Object.keys(obj) > 0) {
+                                    await stuProcessCellLog();
+                                } else {
+                                    nowCourseObj.viewDirectory.cellId = v.Id;
+                                    let re = await ajaxPost(url["viewDirectorys"], nowCourseObj.viewDirectory);
+                                    nowCourseObj.stuProcess = re;
+                                    if (re.cellPercent != 100) {
+                                        await stuProcessCellLog();
+                                    }
                                 }
                             }
                             nowCourseObj.temporaryIndex = ++index;
                         } else {
-                            nowCourseObj.viewDirectory = {
-                                courseOpenId: nowCourseObj.courseOpenId,
-                                openClassId: nowCourseObj.openClassId,
-                                cellId: e.id,
-                                flag: "s",
-                                moduleId: e.moduleId
-                            }
-                            let res = await ajaxPost(url["viewDirectorys"], nowCourseObj.viewDirectory);
-                            nowCourseObj.temporaryIndex = ++index;
-                            Console(`获取进度${index}/${List.length}`);
-                            if (res.cellPercent != 100) {
-                                await stuProcessCellLog(res);
+                            Console(`获取进度${index+1}/${len}`);
+                            if (Object.keys(obj) > 0) {
+                                await stuProcessCellLog();
+                            } else {
+                                nowCourseObj.viewDirectory.cellId = e.id;
+                                let res = await ajaxPost(url["viewDirectorys"], nowCourseObj.viewDirectory);
+                                nowCourseObj.stuProcess = res;
+                                nowCourseObj.temporaryIndex = ++index;
+                                if (res.cellPercent != 100) {
+                                    await stuProcessCellLog(res);
+                                }
                             }
                         }
                     }
                 }
                 Console(`本章节成功完成`);
+                errorNum = 0;
+                nowCourseObj.temporaryList = [];
+                nowCourseObj.temporaryIndex = 0;
                 ajaxSpeed = speed;
                 if (nowCourseObj.index >= nowCourseObj.unCourseList.length) {
                     setTimeOut(() => {
@@ -725,11 +880,12 @@
                 }
 
             } catch (e) {
-                setError(e, viewDirectorys);
+                setError(e);
             }
         }
 
-        async function stuProcessCellLog(res) {
+        async function stuProcessCellLog() {
+            let res = nowCourseObj.stuProcess;
             if (res.code == -100) {
                 let date = await ajaxPost(url["changeStuStudyProcessCellData"], {
                     courseOpenId: res.currCourseOpenId,
@@ -771,39 +927,88 @@
                         Console(`类型暂时未记录！已跳过`);
                         break;
                 }
-
-            } catch (e) {
-                Console(`修改异常:${e}`)
-            }
-            if (type != 0) {
-                let time = 0,
-                    sp = videoAddSpeed;
-                for (let i = 1; i <= type; i++) {
-                    if(type>1){
-                        time = parseInt((sp * i) + newTime);
-                        if ((time + sp) >= len) {
-                            time = len;
+                if (type != 0) {
+                    let time = 0,
+                        sp = videoAddSpeed;
+                    for (let i = 1; i <= type; i++) {
+                        if (type > 1) {
+                            time = parseInt((sp * i) + newTime);
+                            if ((time + sp) >= len) {
+                                time = len;
+                            }
+                        }
+                        let r = await ajaxPost(url["stuProcessCellLog"], {
+                            courseOpenId: nowCourseObj.courseOpenId,
+                            openClassId: nowCourseObj.openClassId,
+                            cellId: res.cellId,
+                            cellLogId: res.cellLogId,
+                            picNum: res.pageCount,
+                            studyNewlyPicNum: res.pageCount,
+                            studyNewlyTime: time,
+                            token: res.guIdToken,
+                        });
+                        r.code >= 1 ? (() => {
+                            Console(`${r.msg},本节进度${i}/${type}`);
+                            nowCourseObj.stuProcess = {};
+                        })() : (() => {
+                            Console(`修改失败！错误码为${r.code},错误信息${r.msg}`);
+                            errorNum++;
+                            Console(`可能原因为速度过快,正在恢复默认速度`);
+                            ajaxSpeed = 10000;
+                            if (errorNum >= 3) {
+                                Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
+                                $run.click();
+                                throw 0;
+                            }
+                        })();
+                        if (/^.*分钟.*禁.*$/gu.test(r.msg) || /刷课/gu.test(r.msg)) {
+                            Console(`账户疑似异常，已终止执行`);
+                            $run.click();
                         }
                     }
-                    let r = await ajaxPost(url["stuProcessCellLog"], {
-                        courseOpenId: nowCourseObj.courseOpenId,
-                        openClassId: nowCourseObj.openClassId,
-                        cellId: res.cellId,
-                        cellLogId: res.cellLogId,
-                        picNum: res.pageCount,
-                        studyNewlyPicNum:res.pageCount,
-                        studyNewlyTime: time,
-                        token: res.guIdToken,
-                    });
-                    r.code >= 1 ? Console(`${r.msg},本节进度${i}/${type}`) : Console(`修改失败！错误码为${r.code},错误信息${r.msg}`);
-                    if (/^.*分钟.*禁.*$/gu.test(r.msg) || /刷课/gu.test(r.msg)) {
-                        throw Console(`账户疑似异常，已终止执行`);
-                    }
+                    Console(`本小节已完成！`);
+                    errorNum = 0;
+                    ajaxSpeed = speed;
                 }
-                Console(`本小节已完成！`)
-                ajaxSpeed = speed;
+            } catch (e) {
+                setError(e);
             }
             return Promise.resolve(0);
+        }
+
+        function fnRetry(i) {
+            if (i != 0) {
+                Console(`正在重新获取进度`);
+            }
+        }
+
+        function setError(e) {
+            if (isPause == 1) {
+                console.error(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
+                errorNum++;
+                setTimeOut(() => {
+                    if (errorNum > 3) {
+                        $run.click();
+                        Console(`获取课程失败，请刷新后在重试`)
+                        console.error(`获取课程失败，请刷新后在重试`);
+                        tiemOut = setTimeout(() => {
+                            Console(`正在尝试重新执行`);
+                            $run.click();
+                        }, 50000);
+                    } else {
+                        Console(`正在尝试重新获取第${errorNum}次`);
+                        pauseNode();
+                    }
+                });
+            } else {
+                throw console.error(`脚本已暂停运行`);
+            }
+        }
+
+        function setTimeOut(fn) {
+            setTimeout(() => {
+                fn()
+            }, 1000);
         }
 
         function Console(text) {
@@ -813,11 +1018,6 @@
             $consoleInfo.scrollTop($consoleInfoItem.height());
         }
 
-        function setTimeOut(fn) {
-            setTimeout(() => {
-                fn()
-            }, 1000);
-        }
 
         async function main() {
             Console("查询用户信息中。。。请稍后")
@@ -868,7 +1068,7 @@
             switch (id) {
                 case "ajax-set":
                     speed = 1000 * setV;
-                    Console(`请求发送速度修改成功,当前速度${ajaxSpeed/1000}s`);
+                    Console(`请求发送速度修改成功,当前速度${speed/1000}s`);
                     break;
                 case "dom-set":
                     domRequestSpeed = 1000 * setV;
@@ -876,7 +1076,7 @@
                     break;
                 case "video-set":
                     videoRequestSpeed = 1000 * setV;
-                    Console(`视频修改速度修改成功,当前速度${videoRequestSpeed/1000}s`);
+                    Console(`视频修改速度修改成功,当前速度${videoRequestSpeed/1000}s,下一个视频后生效`);
                     break;
                 case "video-time-set":
                     videoAddSpeed = setV;
@@ -902,12 +1102,17 @@
             $(this).attr("on", "on");
         });
         $run.click(function() {
+            if (tiemOut != null) {
+                clearTimeout(tiemOut);
+                tiemOut = null;
+            }
             if ($(this).attr("type") != "paused") {
                 $(this).attr("type", "paused");
                 $(this).text("暂停");
                 isPause = 1;
                 if (pauseNode != "") {
-                    Console("已启动脚本运行")
+                    Console("已启动脚本运行");
+                    console.log("已启动脚本运行");
                     pauseNode();
                 } else {
                     getCourseLists();
@@ -919,7 +1124,7 @@
                 isPause = 0;
             }
         });
-        $("#clear-info").click(function(){
+        $("#clear-info").click(function() {
             $consoleInfoItem.html("");
         });
         $leftBtn.click(function() {
@@ -928,11 +1133,38 @@
                 if ($switchBtn.attr("show") != null) {
                     $switchBtn.click();
                 }
-            })()
+            })();
         })
         $rightBtn.click(function() {
             $contentRight.attr("on") == "on" ? $contentRight.removeAttr("on") : $contentRight.attr("on", "on");
         });
+        $couresMenu.on("click", ".menu-box", function() {
+            isPause = 0;
+            clearInterval(tiemOut);
+            tiemOut = null;
+            nowCourseObj.temporaryIndex = 0;
+            nowCourseObj.temporaryList = [];
+            nowCourseObj.stuProcess = {};
+            nowCourseObj.index = +$(this).data("index") - 1;
+            $changeCourse.click();
+            $countDown.parent().remove();
+            setTimeOut(() => {
+                isPause = 1;
+                getCourseLists();
+            })
+        });
+        $changeCourse.click(function() {
+            $couresMenu.attr("show") != "show" ? $couresMenu.attr("show", "show") : $couresMenu.removeAttr("show");
+        });
+        $jumpDom.click(function() {
+            Console(`功能暂时未完成，晚上在更新了`);
+        });
+        $jumpVideo.click(function() {
+            Console(`功能暂时未完成，晚上在更新了`);
+        });
+        $jumpThis.click(function() {
+            Console(`功能暂时未完成，晚上在更新了`);
+        })
         window.onresize = function() {
             if (window.matchMedia("(max-width:1148px)").matches) {
                 if ($contentRight.attr("on") == "on") {
