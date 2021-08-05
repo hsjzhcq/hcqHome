@@ -1,11 +1,11 @@
 /*
  * @Author: hcq
  * @Date: 2021-08-02 14:15:49
- * @LastEditTime: 2021-08-05 12:55:43
+ * @LastEditTime: 2021-08-05 18:19:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @version:1.2
- * @FilePath: https://github.com/hsjzhcq/hcqHome
+ * @version:1.0
+ * @FilePath: https://gitee.com/hcqHome/zjyScript
  */
 (() => {
 
@@ -23,7 +23,7 @@
         tiemOut = null, //5分钟后重试定时器存放
         speed = 2000, //执行速度
         ajaxSpeed = speed, //ajax发送与内容添加速度
-        isPause = 1,//是否暂停运行
+        isPause = 1,
         errorNum = 0, //错误次数
         pauseNode = "", //存放暂停函数节点
         domRequestSpeed = speed, //文档请求速度
@@ -33,7 +33,7 @@
             isVideo: false,
             dom: false,
             video: false
-        },//跳过模块
+        },
         nowCourseObj = {
             index: -1, //当前课程索引(因为在执行过程中会先自增,所以-1自增后会为0)
             courseName: "", //课程名字
@@ -681,6 +681,7 @@
                                         if (index <= 0) {
                                             clearInterval(tiemOut);
                                             $changeCourse.click();
+                                            $countDown.parent().remove();
                                             getCourseLists();
                                         } else {
                                             $countDown.text(--index);
@@ -868,6 +869,8 @@
                 ajaxSpeed = speed;
                 if (nowCourseObj.index + 2 >= nowCourseObj.unCourseList.length) {
                     setTimeOut(() => {
+                        $run.click();
+                        $consoleInfoItem.html("");
                         Console(`所有课件成功完成`);
                     })
                 } else {
@@ -1129,17 +1132,14 @@
             $(this).attr("on", "on");
         });
         $run.click(function() {
-            if (tiemOut != null) {
-                clearTimeout(tiemOut);
-                tiemOut = null;
-            }
+            clearTimeout(tiemOut);
+            tiemOut = null;
             if ($(this).attr("type") != "paused") {
                 $(this).attr("type", "paused");
                 $(this).text("暂停");
                 isPause = 1;
                 if (pauseNode != "") {
                     Console("已启动脚本运行");
-                    console.log("已启动脚本运行");
                     pauseNode();
                 } else {
                     getCourseLists();
