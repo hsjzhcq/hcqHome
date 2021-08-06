@@ -981,7 +981,7 @@
                             Console(`修改失败！错误码为${r.code},错误信息${r.msg}`);
                             errorNum++;
                             Console(`可能原因为速度过快,正在恢复默认速度`);
-                            $("#video-set").val(ajaxSpeed = (videoRequestSpeed = 10000));
+                            $("#video-set").val(ajaxSpeed = (videoRequestSpeed = 10000)/1000);
                             $("#video-time-set").val(videoAddSpeed = 15)
                             if (errorNum >= 3) {
                                 Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
