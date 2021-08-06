@@ -947,7 +947,7 @@
                         break;
                     case "视频":
                     case "音频":
-                        type = Math.round((len - Math.round(newTime)) / videoAddSpeed);
+                        type = Math.round((len - Math.round(newTime)) / videoAddSpeed)||1;
                         ajaxSpeed = videoRequestSpeed;
                         break;
                     default:
