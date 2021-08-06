@@ -1,11 +1,11 @@
 /*
  * @Author: hcq
  * @Date: 2021-08-02 14:15:49
- * @LastEditTime: 2021-08-05 18:19:42
+ * @LastEditTime: 2021-08-06 11:32:44
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @version:1.0
- * @FilePath: https://gitee.com/hcqHome/zjyScript
+ * @version:1.2
+ * @FilePath:https://github.com/hsjzhcq/hcqHome
  */
 (() => {
 
@@ -980,9 +980,9 @@
                         })() : (() => {
                             Console(`修改失败！错误码为${r.code},错误信息${r.msg}`);
                             errorNum++;
-                            Console(`可能原因为速度过快,正在恢复默认速度10s`);
-                            ajaxSpeed = (videoRequestSpeed = 10000);
-                            $("video-set").val(10);
+                            Console(`可能原因为速度过快,正在恢复默认速度`);
+                            $("#video-set").val(ajaxSpeed = (videoRequestSpeed = 10000));
+                            $("#video-time-set").val(videoAddSpeed = 15)
                             if (errorNum >= 3) {
                                 Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
                                 $run.click();
@@ -1174,6 +1174,7 @@
             nowCourseObj.stuProcess = {};
             nowCourseObj.index = +$(this).data("index");
             $changeCourse.click();
+            ajaxSpeed = speed;
             $countDown.parent().remove();
             setTimeOut(() => {
                 pauseNode = getCourseLists;
