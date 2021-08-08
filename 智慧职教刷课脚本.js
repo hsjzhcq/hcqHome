@@ -30,7 +30,6 @@
         videoRequestSpeed = 10000, //视频请求速度
         videoAddSpeed = 15, //视频增加速度
         Jump = {
-            isVideo: false,
             dom: false,
             video: false
         },
@@ -889,13 +888,12 @@
                 } else {
                     nowCourseObj.viewDirectory.cellId = ent.id;
                     let res = await ajaxPost(url["viewDirectorys"], nowCourseObj.viewDirectory),
-                        name = ent.categoryName,
-                        isVideo = (Jump.isVideo = /视频|音频/.test(name));
+                        name = ent.categoryName;
                     nowCourseObj.stuProcess = res;
                     if (res.cellPercent != 100) {
-                        if (Jump.dom == true && Jump.video == false && /文档/.test(name)) {
+                        if (Jump.dom == true && Jump.video == false && /文档|ppt/i.test(name)) {
                             Console(`当前文档已跳过`);
-                        } else if (Jump.video == true && Jump.dom == isVideo) {
+                        } else if (Jump.video == true && Jump.dom == false && /视频|音频/.test(name)) {
                             Console(`当前视频/音频已跳过`);
                         } else {
                             await stuProcessCellLog();
