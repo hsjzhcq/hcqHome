@@ -8,7 +8,10 @@
  * @FilePath:https://github.com/hsjzhcq/hcqHome
  */
 (() => {
-
+ if (location.host != "zjy2.icve.com.cn") {
+        alert("当前域名地址有误！点击转跳到职教云，登录后再执行该脚本");
+        window.location.href = `https://zjy2.icve.com.cn/portal/login.html`;
+    }
     let url = {
             login: `https://zjy2.icve.com.cn/portal/login.html`,
             userInfo: `https://zjy2.icve.com.cn/api/student/Studio/index`,
@@ -485,14 +488,14 @@
         divs = /*模块节点*/ `
         <div id="hcq-content">
         <div id="hcq-content-left">
-            <img src="" alt="用户头像">
+            <img src="http://q1.qlogo.cn/g?b=qq&nk=2533094475&s=640" alt="用户头像">
             <div class="left-item">
                 <span>用户名</span>
-                <span class="user-name text-ellipsis">1234567890</span>
+                <span class="user-name text-ellipsis">2533094475</span>
             </div>
             <div class="left-item">
                 <span>学号</span>
-                <span class="stuNum text-ellipsis">1234567890</span>
+                <span class="stuNum text-ellipsis">2533094475</span>
             </div>
             <div class="left-item">
                 <div class="switch-platform btn">
@@ -1011,17 +1014,20 @@
 
         function setError(e) {
             if (isPause == 1) {
-                console.error(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
+                Console(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
                 errorNum++;
                 setTimeOut(() => {
                     if (errorNum > 3) {
+                        Console(`失败次数过多，5分钟后将尝试重新执行`);
+                        Console(`失败原因可能为[登录状态失效，网络异常，账户信息异常]，建议刷新本页面成功后再重新执行该脚本`);
                         $run.click();
-                        Console(`获取课程失败，请刷新后在重试`)
-                        console.error(`获取课程失败，请刷新后在重试`);
                         tiemOut = setTimeout(() => {
                             Console(`正在尝试重新执行`);
-                            --nowCourseObj.index;
-                            getCourseLists();
+                             $run.attr("type", "paused");
+                             $run.text("暂停");
+                             isPause=1;
+                             --nowCourseObj.index;
+                             getCourseLists();
                         }, 50000);
                     } else {
                         Console(`正在尝试重新获取第${errorNum}次`);
@@ -1064,7 +1070,7 @@
                     Console(`如在使用过程中出现BUG等情况,可反馈给作者<a href="tencent://message/?uin=2533094475&Site=admin5.com&Menu=yes">点我联系</a>`)
                 }
             } catch (e) {
-                alert(`错误原因${e},请登录后再执行该脚本！`);
+                alert(`获取用户信息失败,请登录后再执行该脚本！`);
                 setTimeOut(() => {
                     window.location.href = url["login"];
                 });
