@@ -861,6 +861,7 @@
                     }
                 }
                 Console(`本章节成功完成`);
+                $couresMenu.children(".menu-box").eq(nowCourseObj.index).remove();
                 $jumpThis.removeAttr("ck");
                 errorNum = 0;
                 nowCourseObj.temporaryList = [];
@@ -870,7 +871,9 @@
                     setTimeOut(() => {
                         $run.click();
                         $consoleInfoItem.html("");
+                        setTimeOut(() => {
                         Console(`所有课件成功完成`);
+                        });
                     })
                 } else {
                     getCourseLists();
@@ -935,16 +938,12 @@
                     len = res.pageCount;
                 }
                 Console(`当前小节 类型:[${name}] 名称:[${res.cellName}] 长度:[${len}]`);
-                switch (name) {
-                    case "ppt文档":
-                    case "pdf文档":
-                    case "office文档":
-                    case "excel文档":
+                switch (true) {
+                    case /文档|ppt/i.test(name):
                         type = 1;
                         ajaxSpeed = domRequestSpeed;
                         break;
-                    case "视频":
-                    case "音频":
+                    case /视频|音频/.test(name):
                         type = Math.round((len - Math.round(newTime)) / videoAddSpeed)||1;
                         ajaxSpeed = videoRequestSpeed;
                         break;
@@ -1158,7 +1157,7 @@
                 if ($switchBtn.attr("show") != null) {
                     $switchBtn.click();
                 }
-            })();
+            })(); 
         })
         $rightBtn.click(function() {
             $contentRight.attr("on") == "on" ? $contentRight.removeAttr("on") : $contentRight.attr("on", "on");
