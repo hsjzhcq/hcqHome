@@ -948,7 +948,13 @@
                         ajaxSpeed = domRequestSpeed;
                         break;
                     case /视频|音频/.test(name):
-                        type = Math.round((len - Math.round(newTime)) / videoAddSpeed)||1;
+                        let t = len - Math.round(newTime) / videoAddSpeed,
+                            r = Math.round(t);
+                        if (r < t) {
+                            type = r + 1;
+                        } else {
+                            type = r || 1;
+                        }
                         ajaxSpeed = videoRequestSpeed;
                         break;
                     default:
