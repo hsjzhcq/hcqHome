@@ -1177,6 +1177,7 @@
         });
         $couresMenu.on("click", ".menu-box", function() {
             isPause = 0;
+             clearTimeout(tiemOut);
             clearInterval(tiemOut);
             tiemOut = null;
             nowCourseObj.temporaryIndex = 0;
