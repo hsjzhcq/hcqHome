@@ -614,7 +614,8 @@
     $(function() {
         let $btn = $(".btn"),
             $switchBtn = $(".switch-platform").eq(0),
-            $switchBoxLis = $(".switch-box").find("li"),
+            switchBox = document.querySelector(".switch-box"),
+            $switchBoxLis = $(switchBox).find("li"),
             $contentLeft = $("#hcq-content-left"),
             $contentRight = $("#hcq-content-right"),
             $leftBtn = $(".left-btn"),
