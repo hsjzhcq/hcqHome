@@ -638,9 +638,11 @@
                 pauseNode = getCourseLists;
                 if (nowCourseObj.unCourseList.length != 0) {
                     setNowCourseObj(nowCourseObj.unCourseList[++nowCourseObj.index]);
+                    nowCourseObj.viewDirectory.courseOpenId = nowCourseObj.courseOpenId;
+                    nowCourseObj.viewDirectory.openClassId = nowCourseObj.openClassId;
                     setTimeOut(() => {
                         getProcessLists();
-                    })
+                    });
                 } else {
                     Console('正在获取课程列表中');
                     let data = await ajaxPost(url["getLearnningCourseLists"]),
@@ -671,8 +673,13 @@
                             }
                         });
                         nowCourseObj.unCourseList = unfinishedList;
+                     let unfinished=List.length-finished;
+                     if(unfinished==0){
+                       alert(`所有课程均完成，感谢您的使用😉`);
+                       $("#hcq-content").remove();
+                     }else{
                         setTimeOut(() => {
-                            Console(`其中已完成课程有${finished}门课程，未完成课程为${List.length-finished}门课程`);
+                            Console(`其中已完成课程有${finished}门课程，未完成课程为${unfinished}门课程`);
                             errorNum = 0;
                             setTimeOut(() => {
                                 Console(`正在载入未完成课程,请稍后。。。`);
@@ -693,10 +700,9 @@
                                 });
                             });
                         });
+                     }
                     });
                 }
-                nowCourseObj.viewDirectory.courseOpenId = nowCourseObj.courseOpenId;
-                nowCourseObj.viewDirectory.openClassId = nowCourseObj.openClassId;
             } catch (e) {
                 setError(e);
             }
