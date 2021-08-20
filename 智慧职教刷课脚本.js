@@ -894,7 +894,8 @@
             }
         }
         async function ifSetProcess(ent) {
-            return new Promise(async(e) => {
+            return new Promise(async(e,r) => {
+             try{
                 let obj = nowCourseObj.stuProcess;
                 if (Object.keys(obj) > 0) {
                     await stuProcessCellLog();
@@ -916,7 +917,10 @@
                     }
                 }
                 e(0);
-            })
+             }catch (e) {
+                r(e);
+             }
+          });
         }
         async function stuProcessCellLog() {
             let res = nowCourseObj.stuProcess;
@@ -995,12 +999,12 @@
                             errorNum++;
                             Console(`可能原因为速度过快,正在恢复默认速度`);
                             $("#video-set").val(ajaxSpeed = (videoRequestSpeed = 10000)/1000);
-                            $("#video-time-set").val(videoAddSpeed = 15)
+                            $("#video-time-set").val(videoAddSpeed = 15);
                             if (errorNum >= 3) {
                                 Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
                                 $run.click();
-                                throw 0;
                             }
+                            throw 0;
                         })();
                         if (/^.*分钟.*禁.*$/gu.test(r.msg) || /刷课/gu.test(r.msg)) {
                             Console(`账户疑似异常，已终止执行`);
