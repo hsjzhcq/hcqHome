@@ -923,7 +923,8 @@
           });
         }
         async function stuProcessCellLog() {
-            let res = nowCourseObj.stuProcess;
+            let res = nowCourseObj.stuProcess,
+                ifOk=true;
             if (res.code == -100) {
                 let date = await ajaxPost(url["changeStuStudyProcessCellData"], {
                     courseOpenId: res.currCourseOpenId,
@@ -997,14 +998,16 @@
                         })() : (() => {
                             Console(`修改失败！错误码为${r.code},错误信息${r.msg}`);
                             errorNum++;
-                            Console(`可能原因为速度过快,正在恢复默认速度`);
+                          Console(`可能原因[账号其他设备操作，速度过快]`);
+                          Console(`正在恢复默认速度,并进行重试`);
                             $("#video-set").val(ajaxSpeed = (videoRequestSpeed = 10000)/1000);
                             $("#video-time-set").val(videoAddSpeed = 15);
-                            if (errorNum >= 3) {
+                            if (errorNum > 3) {
                                 Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
                                 $run.click();
                             }
-                            throw 0;
+                         ifOk=false;
+                         throw 0;
                         })();
                         if (/^.*分钟.*禁.*$/gu.test(r.msg) || /刷课/gu.test(r.msg)) {
                             Console(`账户疑似异常，已终止执行`);
@@ -1016,9 +1019,15 @@
                     ajaxSpeed = speed;
                 }
             } catch (e) {
+             if(ifOk){
                 setError(e);
-            }
+              }
+           }
+          if(ifOk){
             return Promise.resolve(0);
+          }else{
+           return Promise.reject(0);
+          }
         }
 
 
