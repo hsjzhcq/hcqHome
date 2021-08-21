@@ -997,8 +997,7 @@ overflow: hidden;
                             Console(`${r.msg},本节进度${i}/${type}`);
                             nowCourseObj.stuProcess = {};
                         })() : (() => {
-                            Console(`修改失败！错误码为${r.code},错误信息${r.msg}`);
-                            errorNum++;
+                          Console(`修改失败！错误码为${r.code},错误信息${r.msg}`);
                           Console(`可能原因[账号其他设备操作，速度过快]`);
                           Console(`正在恢复默认速度,并进行重试`);
                             $("#video-set").val(ajaxSpeed = (videoRequestSpeed = 10000)/1000);
@@ -1007,7 +1006,6 @@ overflow: hidden;
                                 Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
                                 $run.click();
                             }
-                         ifOk=false;
                          throw 0;
                         })();
                         if (/^.*分钟.*禁.*$/gu.test(r.msg) || /刷课/gu.test(r.msg)) {
@@ -1020,9 +1018,7 @@ overflow: hidden;
                     ajaxSpeed = speed;
                 }
             } catch (e) {
-             if(ifOk){
-                setError(e);
-              }
+               ifOk=false;
            }
           if(ifOk){
             return Promise.resolve(0);
