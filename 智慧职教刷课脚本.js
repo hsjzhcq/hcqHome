@@ -129,6 +129,7 @@
         #hcq-main {
             flex: 1;
             z-index: -2 !important;
+overflow: hidden;
         }
         
         #console-info {
