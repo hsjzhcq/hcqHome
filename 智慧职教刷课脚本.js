@@ -979,7 +979,7 @@ overflow: hidden;
                     for (let i = 1; i <= type; i++) {
                         if (type > 1) {
                             time = parseInt((sp * i) + newTime);
-                            if ((time + sp) >= len) {
+                            if (time >= len) {
                                 time = len;
                             }
                         }
