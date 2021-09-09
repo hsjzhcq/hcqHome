@@ -906,7 +906,7 @@ overflow: hidden;
                         name = ent.categoryName;
                     nowCourseObj.stuProcess = res;
                     if (res.cellPercent != 100) {
-                        if (Jump.dom == true && Jump.video == false && /文档|ppt|图片/i.test(name)) {
+                        if (Jump.dom == true && Jump.video == false && !/视频|音频/.test(name)) {
                             Console(`当前文档已跳过`);
                         } else if (Jump.video == true && Jump.dom == false && /视频|音频/.test(name)) {
                             Console(`当前视频/音频已跳过`);
@@ -955,10 +955,6 @@ overflow: hidden;
                 }
                 Console(`当前小节 类型:[${name}] 名称:[${res.cellName}] 长度:[${len}]`);
                 switch (true) {
-                    case /文档|ppt|图片/i.test(name):
-                        type = 1;
-                        ajaxSpeed = domRequestSpeed;
-                        break;
                     case /视频|音频/.test(name):
                         let t = (len - Math.round(newTime)) / videoAddSpeed,
                             r = Math.round(t);
@@ -970,7 +966,8 @@ overflow: hidden;
                         ajaxSpeed = videoRequestSpeed;
                         break;
                     default:
-                        Console(`类型暂时未记录！已跳过`);
+                         type = 1;
+                        ajaxSpeed = domRequestSpeed;
                         break;
                 }
                 if (type != 0) {
