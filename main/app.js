@@ -1,10 +1,8 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-18 22:17:56
+ * @LastEditTime: 2021-12-18 23:18:15
  * @LastEditors: Please set LastEditors
- * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- * @FilePath: \我的博客\js\app.js
  */
 (() => {
     var typeHome = ["https://zjy2.icve.com.cn", "https://mooc.icve.com.cn"], //平台类型数组
@@ -296,7 +294,6 @@
         }
         var $Script = new _script(typeIndex);
         async function getCourseLists() {
-
             try {
                 config.pauseNode = "getCourseLists";
                 if (CourseList.length != 0) {
@@ -395,6 +392,7 @@
                         let res = await $Script.getNodeLists();
                         CourseList[i].module[index].topic = res;
                         config.index[1] = ++index;
+                        updataData("c");
                         Console(`获取模块节点进度${index}/${len}`);
                     } else {
                         config.index[1] = ++index;
@@ -402,7 +400,6 @@
                     }
                 }
                 if (config.close) return;
-                updataData("c");
                 configInit(1);
                 setTimeOut(() => {
                     Console(`已获取本课程所有模块节点信息`);
@@ -514,11 +511,17 @@
                 Console(`当前课程已成功完成`);
                 configInit(3);
                 CourseList.splice(config.index[0], 1);
+                $couresMenu.children().eq(config.index[0]).remove();
                 config.index[0] >= CourseList.length ? config.index[0] = 0 : "";
                 updataData("i-c-u");
                 setTimeOut(() => {
-                    Console("准备进入下一个课程。。。");
-                    getCourseLists();
+                    if (CourseList.length != 0) {
+                        Console("准备进入下一个课程。。。");
+                        getCourseLists();
+                    } else {
+                        alert(`所有课程均完成，感谢您的使用😉`);
+                        $("#hcq-content").remove();
+                    }
                 });
             } catch (e) {
                 setError(e);
