@@ -1086,7 +1086,8 @@ overflow: hidden;
                     $contentLeft.find(".user-name").text(res.UserName);
                     $contentLeft.find(".stuNum").text(res.stuNo);
                     Console(`[${res.disPlayName}]用户您好，欢迎━(*｀∀´*)ノ亻!使用本脚本，正在持续更新中。`)
-                    Console(`如在使用过程中出现BUG等情况,可反馈给作者<a href="tencent://message/?uin=2533094475&Site=admin5.com&Menu=yes">点我联系</a>`)
+                    Console(`如在使用过程中出现BUG等情况,可反馈给作者<a href="tencent://message/?uin=2533094475&Site=admin5.com&Menu=yes">点我联系</a>`);
+                    Console(`该脚本目前已更新为2.0版本,点我<a href="https://github.com/hsjzhcq/hcqHome">转跳</a>进行体验，如遇bug请邮箱提交或者qq临时会话，不用添加好友`);
                 }
             } catch (e) {
                 alert(`获取用户信息失败,请登录后再执行该脚本！`);
