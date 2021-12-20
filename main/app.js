@@ -1,8 +1,10 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-18 23:18:15
+ * @LastEditTime: 2021-12-20 16:02:17
  * @LastEditors: Please set LastEditors
+ * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @FilePath: \我的博客\js\app.js
  */
 (() => {
     var typeHome = ["https://zjy2.icve.com.cn", "https://mooc.icve.com.cn"], //平台类型数组
@@ -48,7 +50,7 @@
         if (bgUrl) $main.css("background-image", "url(" + bgUrl + ")");
         let inTime = null; //倒计时定时器
         var config = {
-                index: null, //进度索引[课程索引,模块索引,节点索引,子节点索引]
+                index: [0, 0, 0], //进度索引[课程索引,模块索引,节点索引,子节点索引]
                 nowDomOrVideo: 0, //当前是文档还是视频[0文档,1视频]
                 unIndex: 0, //未完成索引
                 isRead: false, //是否为读取
@@ -68,8 +70,8 @@
             CourseList = null, //未完成课程对象树
             unNodeList = null; //未完成子节点索引树
         setTimeOut(() => {
-            Console("查询用户信息中。。。请稍后");
             userInit();
+            Console("查询用户信息中。。。请稍后");
             if (/token=.*^/.test(document.cookie)) {
                 alert("请登录后再执行该脚本！");
                 setTimeout(() => {
@@ -82,7 +84,7 @@
                 $c_left.find(".stuNum").text(localStorage.getItem("userName"));
                 Console(`[${name}]用户您好，欢迎━(*｀∀´*)ノ亻!使用本脚本，该脚本已更新为2.0版本`);
                 Console(`如在使用过程中出现BUG等情况,可反馈给作者<a href="tencent://message/?uin=2533094475&Site=admin5.com&Menu=yes">点我联系</a>`);
-                if(typeIndex)Console(`该脚本不支持做测验题,所以会出现课程未完成但没办法全部完成子节点情况，是因为跳过了测验题，建议手动完成测验题再执行该脚本或者忽视测验题`);
+                if (typeIndex) Console(`该脚本不支持做测验题,所以会出现课程未完成但没办法全部完成子节点情况，是因为跳过了测验题，建议手动完成测验题再执行该脚本或者忽视测验题`);
             }
         });
         class _script { //该类只关心返回什么样的数据
@@ -179,23 +181,27 @@
                 let list = res.cellList,
                     mId = CourseList[index].module[mIndex].id,
                     data = [],
-                    unNode = [];
-                list.forEach((e, i) => {
+                    unNode = [],
+                    unNum = null,
+                    i = 0;
+                list.forEach(e => {
                     if (e.childNodeList.length != 0) {
                         e.childNodeList.forEach(item => {
-                            let unNum = null;
+                            unNum = null;
                             this.filterType(item, () => {
                                 unNum = `${mIndex}-${tIndex}-${i}`;
                                 unNode.push(unNum);
                             }, true);
+                            i++;
                             data.push(this.filterCellData(item, mId, unNum));
                         });
                     } else {
-                        let unNum = null;
+                        unNum = null;
                         this.filterType(e, () => {
                             unNum = `${mIndex}-${tIndex}-${i}`;
                             unNode.push(unNum);
                         });
+                        i++;
                         data.push(this.filterCellData(e, mId, unNum));
                     }
                 });
@@ -294,12 +300,26 @@
             }
         }
         var $Script = new _script(typeIndex);
-        async function getCourseLists() {
+        async function getCourseLists(is) {
             try {
+                if (config.isRead) {
+                    let data = await $Script.getCourseLists();
+                    if (data.len != CourseList.length) {
+                        Console("课程有变动，重新更新课程。。。");
+                        let arr = [];
+                        f: for (const r of data.list) {
+                            for (const e of CourseList) {
+                                if (e.openId == r.openId) continue f;
+                            }
+                            arr.push(r);
+                        }
+                        CourseList.push(...arr);
+                    }
+                }
                 config.pauseNode = "getCourseLists";
                 if (CourseList.length != 0) {
                     if (!config.isInit) { CourseListInit() } else {
-                        if (config.isRead === false) filterIndex(0, CourseList.length);
+                        if (is != 0) filterIndex();
                         setTimeOut(getModuleLists);
                     }
                 } else {
@@ -420,12 +440,12 @@
                 Console(`准备获取模块子节点信息...`);
                 let mL = CourseList[i].module.length;
                 while (mI < mL) {
+                    if (config.close) break;
                     let tL = CourseList[i].module[mI].topic.length;
                     while (tI < tL) {
-                        if (config.close) break;
                         if (CourseList[i].module[mI].topic[tI].Nodes.length == 0) {
-                            if (config.close) break;
                             let res = await $Script.getChildNodeLists();
+                            if (config.close) break;
                             CourseList[i].module[mI].topic[tI].Nodes = res.data;
                             unNodeList.push(...res.unNode);
                             config.index[2] = ++tI;
@@ -514,7 +534,7 @@
                 CourseList.splice(config.index[0], 1);
                 $couresMenu.children().eq(config.index[0]).remove();
                 config.index[0] >= CourseList.length ? config.index[0] = 0 : "";
-                updataData("i-c-u");
+                updataData("c-u");
                 setTimeOut(() => {
                     if (CourseList.length != 0) {
                         Console("准备进入下一个课程。。。");
@@ -631,14 +651,13 @@
             if ($ch_btn.is(".onck")) $ch_btn.click();
             if ($(this).attr("now") == undefined) {
                 $(this).attr("now", "").siblings("div[now]").removeAttr("now");
-                config.index[0] = +$(this).index();
+                let i = +$(this).index();
+                config.index = [i, 0, 0, 0];
                 config.isPause = config.close = true;
-                if (config.pauseNode == "getChildNodeInfo") config.close = true;
                 setTimeout(() => {
-                    config.isRead = true;
                     config.isPause = config.close = false;
                     config.ajaxSpeed = config.speed;
-                    getCourseLists();
+                    getCourseLists(0);
                 }, config.ajaxSpeed);
             }
         });
@@ -863,24 +882,24 @@
         }
 
         function userInit() {
-            let id = localStorage.getItem("userName");
+            let id = localStorage.getItem("userName") + "_v.1";
             if (localStorage.getItem("scriptID") !== id) {
                 localStorage.setItem("scriptID", id);
                 Console("对运行环境数据初始化中。。。");
+                if (localStorage.getItem("s_courseList")) localStorage.removeItem("s_courseList");
+                if (localStorage.getItem("s_unNodeList")) localStorage.removeItem("s_unNodeList");
                 config.isRead = false;
-                config.index = [0, 0, 0, 0];
                 CourseList = unNodeList = [];
             } else {
-                config.index = JSON.parse(localStorage.getItem("s_index")) || [0, 0, 0, 0];
                 CourseList = JSON.parse(localStorage.getItem("s_courseList")) || [];
                 unNodeList = JSON.parse(localStorage.getItem("s_unNodeList")) || [];
                 config.isRead = true;
             }
         }
 
-        function filterIndex(index, len) {
-            if (index > 3 || index < 0) index = 0;
-            config.index[index] >= --len ? config.index[index] = len : config.index[index]++;
+        function filterIndex() {
+            let len = CourseList.length;
+            config.index[0] >= --len ? config.index[0] = len : config.index[0]++;
         }
 
         function setTimeOut(fn) {
@@ -895,9 +914,6 @@
             str = str.split("-");
             for (const v of str) {
                 switch (v) {
-                    case "i":
-                        localStorage.setItem('s_index', JSON.stringify(config.index));
-                        break;
                     case "c":
                         localStorage.setItem('s_courseList', JSON.stringify(CourseList));
                         break;
@@ -1002,7 +1018,7 @@
             margin: 20px auto;border-radius: 5px;object-fit: cover}
         .left-item {position: relative;margin: .5rem 0;text-align: center}
         .left-item>span,.menu-item>span {display: block}
-        .text-ellipsis {padding: .5rem;overflow: hidden;text-overflow: ellipsis;white-space: nowrap}
+        .text-ellipsis {padding: .5rem}
         #hcq-main {position: relative;flex: 1;display: flex;justify-content: center;align-items: center;
             background-size: cover;background-position: center}
         #hcq-main>div {position: absolute;display: none;flex-shrink: 0;width: 90%;height: 90%;
