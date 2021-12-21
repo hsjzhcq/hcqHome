@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-21 14:44:23
+ * @LastEditTime: 2021-12-21 17:05:06
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -300,9 +300,10 @@
         var $Script = new _script(typeIndex);
         async function getCourseLists(is) {
             try {
+                debugger;
                 if (config.isRead && CourseList.length != 0) {
                     let data = await $Script.getCourseLists();
-                    if (data.len != CourseList.length) {
+                    if (data.list.length != CourseList.length) {
                         Console("课程有变动，重新更新课程。。。");
                         let arr = [];
                         f: for (const r of data.list) {
@@ -1034,9 +1035,8 @@
         #hcq-main>div.flex.show {display: flex}
         #hcq-main>#console-info {overflow: auto;background-color: rgba(255, 255, 255, .75);scroll-behavior: smooth}
         .info-box>span {display: block;border-bottom: 1px dashed #2ECD71}
-        #console-info>.coures-menu {position: absolute;display: flex;flex-wrap: wrap;align-content: flex-start;
-            top: 0;width: 100%;height: 100%;overflow-y: auto;background-color: #ccc}
-        .coures-menu>.menu-box {position: relative;display: flex;justify-content: center;width: 20%}
+        .coures-menu {overflow-y: auto;}
+        .coures-menu>.menu-box {position: relative;display: flex;width: 20%;justify-content: center;float: left}
         .menu-box>div {position: relative;width: 120px;height: 140px;flex-shrink: 0;margin: .5rem;
             border-radius: 5px;background-color: rgb(114, 93, 233);box-shadow: 0 0 5px #666;color: #fff}
         .menu-box>div>div {position: absolute;width: 2rem;height: 2rem;border-radius: 50%;right: 0;background-color: #0aec6960}
