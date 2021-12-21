@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-20 16:02:17
+ * @LastEditTime: 2021-12-21 14:44:23
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -300,7 +300,7 @@
         var $Script = new _script(typeIndex);
         async function getCourseLists(is) {
             try {
-                if (config.isRead) {
+                if (config.isRead && CourseList.length != 0) {
                     let data = await $Script.getCourseLists();
                     if (data.len != CourseList.length) {
                         Console("课程有变动，重新更新课程。。。");
@@ -509,15 +509,16 @@
                         if (config.close) continue;
                         $jumpThis.removeClass("loader");
                         if (res.cellPercent != 100) {
-                            if (await SetProgress(res, node) != 0) {
-                                CourseList[config.index[0]].module[arr[0]].topic[arr[1]].Nodes[arr[2]].unNum = null;
-                                $(".view-3[data-un=" + v + "]").addClass("isOk");
-                            } else {
+                            if (await SetProgress(res, node) === 0) {
                                 config.isInit ? config.unIndex++ : config.isInit = false;
                                 updata = false;
                             }
-                        } else { Console("本小节已完成！") };
+                        } else {
+                            Console("本小节已完成！");
+                        };
                         if (updata) {
+                            CourseList[config.index[0]].module[arr[0]].topic[arr[1]].Nodes[arr[2]].unNum = null;
+                            $(".view-3[data-un=" + v + "]").addClass("isOk");
                             unNodeList.splice(config.unIndex, 1);
                             updataData("c-u");
                         }
@@ -550,18 +551,7 @@
             if (typeof res != "object" || typeof node != "object") return Promise.reject("参数违法！调用失败");
             try {
                 if (res.code == -100) {
-                    let date = await _ajax($Script.url.nodeDataChange, {
-                        courseOpenId: res.currCourseOpenId,
-                        openClassId: res.currOpenClassId,
-                        moduleId: res.currModuleId,
-                        cellId: res.curCellId,
-                        cellName: res.currCellName,
-                    });
-                    if (date.code == 1) {
-                        res = await $Script.getChildNodeInfo(node);
-                    } else {
-                        throw 0;
-                    }
+                    res = await getNodeDataChange(res);
                 }
                 let obj = $Script.filterNeedData(res),
                     len = obj.info.is ? obj.info.TimeLong : obj.info.pageCount,
@@ -596,16 +586,21 @@
                             if (request.code >= 1) {
                                 Console(`操作成功,本节进度${i}/${sum}`);
                             } else {
-                                Console(`修改失败！错误码为${request.code},错误信息${request.msg}`);
-                                Console(`正在恢复默认速度,并进行重试`);
-                                $("#video-set").val(config.ajaxSpeed = (config.videoRequestSpeed = 10000) / 1000);
-                                $("#video-time-set").val(config.videoAddSpeed = 15);
-                                config.errorNum++;
-                                if (config.errorNum > 3) {
-                                    Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
-                                    $run.click();
-                                    throw 0;
+                                if (request.code == -100) {
+                                    request = await getNodeDataChange(request);
+                                    Console(`操作成功,本节进度${i}/${sum}`);
+                                } else {
+                                    Console(`修改失败！错误码为${request.code},错误信息${request.msg}`);
+                                    Console(`正在恢复默认速度,并进行重试`);
+                                    $("#video-set").val(config.ajaxSpeed = (config.videoRequestSpeed = 10000) / 1000);
+                                    $("#video-time-set").val(config.videoAddSpeed = 15);
+                                    config.errorNum++;
+                                    if (config.errorNum > 3) {
+                                        Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
+                                        $run.click();
+                                    }
                                 }
+
                             }
                         }
                     }
@@ -619,7 +614,21 @@
                 config.errorNum = 0;
                 config.ajaxSpeed = config.speed;
             } catch (e) {
-                setError(e);
+                return 0;
+            }
+        }
+        async function getNodeDataChange(res) {
+            let date = await _ajax($Script.url.nodeDataChange, {
+                courseOpenId: res.currCourseOpenId,
+                openClassId: res.currOpenClassId,
+                moduleId: res.currModuleId,
+                cellId: res.curCellId,
+                cellName: res.currCellName,
+            });
+            if (date.code == 1) {
+                return await $Script.getChildNodeInfo(node);
+            } else {
+                return Promise.reject(0);
             }
         }
         $l_btn.click(function() {
