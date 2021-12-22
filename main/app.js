@@ -588,7 +588,8 @@
                                 Console(`操作成功,本节进度${i}/${sum}`);
                             } else {
                                 if (request.code == -100) {
-                                    request = await getNodeDataChange(request);
+                                    await getNodeDataChange(request);
+                                    request = await _ajax($Script.url.setProgress, obj.data);
                                     Console(`操作成功,本节进度${i}/${sum}`);
                                 } else {
                                     Console(`修改失败！错误码为${request.code},错误信息${request.msg}`);
