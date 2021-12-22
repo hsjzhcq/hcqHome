@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-21 17:05:06
+ * @LastEditTime: 2021-12-22 19:42:53
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -300,7 +300,6 @@
         var $Script = new _script(typeIndex);
         async function getCourseLists(is) {
             try {
-                debugger;
                 if (config.isRead && CourseList.length != 0) {
                     let data = await $Script.getCourseLists();
                     if (data.list.length != CourseList.length) {
@@ -511,7 +510,6 @@
                         $jumpThis.removeClass("loader");
                         if (res.cellPercent != 100) {
                             if (await SetProgress(res, node) === 0) {
-                                config.isInit ? config.unIndex++ : config.isInit = false;
                                 updata = false;
                             }
                         } else {
@@ -552,7 +550,7 @@
             if (typeof res != "object" || typeof node != "object") return Promise.reject("参数违法！调用失败");
             try {
                 if (res.code == -100) {
-                    res = await getNodeDataChange(res);
+                    res = await getNodeDataChange(res, node);
                 }
                 let obj = $Script.filterNeedData(res),
                     len = obj.info.is ? obj.info.TimeLong : obj.info.pageCount,
@@ -619,7 +617,7 @@
                 return 0;
             }
         }
-        async function getNodeDataChange(res) {
+        async function getNodeDataChange(res, node) {
             let date = await _ajax($Script.url.nodeDataChange, {
                 courseOpenId: res.currCourseOpenId,
                 openClassId: res.currOpenClassId,
@@ -680,7 +678,6 @@
                         $couresView.attr("load", "");
                         config.ajaxSpeed = config.speed;
                         config.unIndex = unNodeList.indexOf($(this).data("un"));
-                        config.isInit = true;
                         config.close = true;
                         setTimeout(() => {
                             $couresView.removeAttr("load");
@@ -816,6 +813,10 @@
                         on = false;
                         config.close = true;
                         config.unIndex++;
+                        $(this).addClass("loader");
+                        setTimeout(() => {
+                            Console(`已跳过当前子节点`);
+                        }, config.ajaxSpeed - 1000);
                         setTimeout(() => {
                             Console(`已跳过当前子节点`);
                             config.ajaxSpeed = config.speed;
