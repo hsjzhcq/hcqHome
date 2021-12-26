@@ -509,8 +509,12 @@
                         if (config.close) continue;
                         $jumpThis.removeClass("loader");
                         if (res.cellPercent != 100) {
-                            if (await SetProgress(res, node) === 0) {
+                            let datas=await SetProgress(res, node);
+                            if (datas=== 0) {
                                 updata = false;
+                            }else if(datas=== 1){
+                                updata = false;
+                                config.unIndex++;
                             }
                         } else {
                             Console("本小节已完成！");
@@ -547,7 +551,6 @@
             }
         }
         async function SetProgress(res, node) {
-            if (typeof res != "object" || typeof node != "object") return Promise.reject("参数违法！调用失败");
             try {
                 if (res.code == -100) {
                     res = await getNodeDataChange(res, node);
@@ -605,7 +608,7 @@
                         }
                     }
                 }
-                if (/刷课|禁/.test(request.msg)) {
+                if (request && request.msg && /刷课|禁/.test(request.msg)) {
                     Console(`账户疑似异常，已终止执行`);
                     $run.click();
                 }
@@ -614,7 +617,14 @@
                 config.errorNum = 0;
                 config.ajaxSpeed = config.speed;
             } catch (e) {
-                return 0;
+                Console(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
+                config.errorNum++;
+                if (config.errorNum > 3) {
+                    Console(`当前节点可能异常,暂时跳过`);
+                    return 1
+                } else {
+                    return 0
+                }
             }
         }
         async function getNodeDataChange(res, node) {
