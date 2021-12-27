@@ -440,8 +440,8 @@
                 while (mI < mL) {
                     if (config.close) break;
                     let tL = CourseList[i].module[mI].topic.length;
-                    let node = CourseList[i].module[mI].topic[tI].Nodes;
                     while (tI < tL) {
+                        let node = CourseList[i].module[mI].topic[tI].Nodes;
                         if (node != null && node.length == 0) {
                             let res = await $Script.getChildNodeLists();
                             if (config.close) break;
