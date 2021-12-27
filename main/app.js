@@ -605,7 +605,7 @@
                                 } else {
                                     Console(`修改失败！错误码为${request.code},错误信息${request.msg}`);
                                     Console(`正在恢复默认速度,并进行重试`);
-                                    $("#video-set").val(config.ajaxSpeed = config.videoRequestSpeed = 10000);
+                                    $("#video-set").val((config.ajaxSpeed = config.videoRequestSpeed = 10000)/1000);
                                     $("#video-time-set").val(config.videoAddSpeed = 15);
                                     config.errorNum++;
                                     time -= sp;
