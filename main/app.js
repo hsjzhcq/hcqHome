@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-22 19:42:53
+ * @LastEditTime: 2021-12-27 13:22:17
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -55,7 +55,7 @@
                 isInit: false, //是否初始化
                 close: false, //是否关闭一次
                 tiemOut: null, //5分钟后重试定时器存放
-                speed: 2000, //执行速度
+                speed: 3000, //执行速度
                 ajaxSpeed: 2000, //ajax发送与内容添加速度
                 isPause: false, //是否暂停
                 errorNum: 0, //错误次数
@@ -66,7 +66,7 @@
                 Jump: 0 //是否跳过，1跳过文档，2跳过视频，其他不跳过
             },
             CourseList = null, //未完成课程对象树
-            unNodeList = null; //未完成子节点索引树
+            unNodeList = []; //未完成子节点索引树
         setTimeOut(() => {
             userInit();
             Console("查询用户信息中。。。请稍后");
@@ -324,7 +324,7 @@
                     Console('正在获取课程列表中...');
                     let data = await $Script.getCourseLists();
                     CourseList = data.list;
-                    updataData("c");
+                    updataData();
                     if (CourseList.length == 0) {
                         setTimeOut(Console("所有课程均完成，感谢您的使用😉"));
                         setTimeout(() => {
@@ -350,6 +350,7 @@
                 Console(`正在载入未完成课程,请稍后。。。`);
                 $couresMenu.append(getCourseDom());
                 config.isInit = true;
+                config.isRead = false;
             }).then(r => {
                 setTimeOut(() => {
                     $menubar.children("[data-type=change]").removeClass("loader");
@@ -371,14 +372,13 @@
         async function getModuleLists() {
             let index = config.index[0];
             try {
-                config.isRead = false;
                 if (config.close) config.close = false;
                 config.pauseNode = "getModuleLists";
                 Console(`当前课程名称${CourseList[index].name}`);
                 if (CourseList[index].module.length == 0) {
                     let data = await $Script.getModuleLists();
                     CourseList[index].module = data.module;
-                    updataData("c");
+                    updataData();
                     let len = data.info.len,
                         unlen = data.info.unlen;
                     await setTimeOut(() => {
@@ -411,7 +411,7 @@
                         let res = await $Script.getNodeLists();
                         CourseList[i].module[index].topic = res;
                         config.index[1] = ++index;
-                        updataData("c");
+                        updataData();
                         Console(`获取模块节点进度${index}/${len}`);
                     } else {
                         config.index[1] = ++index;
@@ -440,16 +440,23 @@
                 while (mI < mL) {
                     if (config.close) break;
                     let tL = CourseList[i].module[mI].topic.length;
+                    let node = CourseList[i].module[mI].topic[tI].Nodes;
                     while (tI < tL) {
-                        if (CourseList[i].module[mI].topic[tI].Nodes.length == 0) {
+                        if (node != null && node.length == 0) {
                             let res = await $Script.getChildNodeLists();
                             if (config.close) break;
-                            CourseList[i].module[mI].topic[tI].Nodes = res.data;
+                            CourseList[i].module[mI].topic[tI].Nodes = res.data.length == 0 ? null : res.data;
                             unNodeList.push(...res.unNode);
                             config.index[2] = ++tI;
-                            updataData("c-u");
+                            updataData();
                             Console(`获取模块子节点进度[${mL}/${mI + 1}]->[${tL}/${tI}]`);
+                            config.errorNum = 0;
                         } else {
+                            if (node != null) {
+                                node.forEach(r => {
+                                    if (r.unNum) unNodeList.push(r.unNum);
+                                })
+                            }
                             config.index[2] = ++tI;
                             Console(`读取模块子节点进度[${mL}/${mI + 1}]->[${tL}/${tI}]`);
                         }
@@ -509,10 +516,10 @@
                         if (config.close) continue;
                         $jumpThis.removeClass("loader");
                         if (res.cellPercent != 100) {
-                            let datas=await SetProgress(res, node);
-                            if (datas=== 0) {
+                            let datas = await SetProgress(res, node);
+                            if (datas === 0) {
                                 updata = false;
-                            }else if(datas=== 1){
+                            } else if (datas === 1) {
                                 updata = false;
                                 config.unIndex++;
                             }
@@ -523,7 +530,7 @@
                             CourseList[config.index[0]].module[arr[0]].topic[arr[1]].Nodes[arr[2]].unNum = null;
                             $(".view-3[data-un=" + v + "]").addClass("isOk");
                             unNodeList.splice(config.unIndex, 1);
-                            updataData("c-u");
+                            updataData();
                         }
                         $jumpThis.addClass("loader");
                         if (config.unIndex >= unNodeList.length) config.unIndex = 0;
@@ -536,7 +543,7 @@
                 CourseList.splice(config.index[0], 1);
                 $couresMenu.children().eq(config.index[0]).remove();
                 config.index[0] >= CourseList.length ? config.index[0] = 0 : "";
-                updataData("c-u");
+                updataData();
                 setTimeOut(() => {
                     if (CourseList.length != 0) {
                         Console("准备进入下一个课程。。。");
@@ -587,6 +594,7 @@
                             request = await _ajax($Script.url.setProgress, obj.data);
                             if (request.code >= 1) {
                                 Console(`操作成功,本节进度${i}/${sum}`);
+                                config.errorNum = 0;
                             } else {
                                 if (request.code == -100) {
                                     await getNodeDataChange(request);
@@ -670,6 +678,7 @@
                 $(this).attr("now", "").siblings("div[now]").removeAttr("now");
                 let i = +$(this).index();
                 config.index = [i, 0, 0, 0];
+                unNodeList = [];
                 config.isPause = config.close = true;
                 setTimeout(() => {
                     config.isPause = config.close = false;
@@ -709,6 +718,7 @@
                     Console("已启动脚本运行");
                     eval(config.pauseNode + "()");
                 } else {
+                    Console("获取课程信息中...");
                     getCourseLists();
                 }
             } else {
@@ -872,12 +882,14 @@
                     <div class="view-wrap">
                     <ul class="view-item" data-v=3>
                     `;
-                    for (const r of e.Nodes) {
-                        html += `
+                    if (e.Nodes != null) {
+                        for (const r of e.Nodes) {
+                            html += `
                         <li class="view-3 ${r.unNum ? "" : "isOk"}" data-un=${r.unNum} >
                         <b>${r.type}</b>
                         <span>${r.name}</span>
                         </li>`;
+                        }
                     }
                     html += "</ul></div></ul>";
                 }
@@ -902,17 +914,16 @@
         }
 
         function userInit() {
-            let id = localStorage.getItem("userName") + "_v.1";
+            let id = localStorage.getItem("userName") + "_v.2";
             if (localStorage.getItem("scriptID") !== id) {
                 localStorage.setItem("scriptID", id);
                 Console("对运行环境数据初始化中。。。");
                 if (localStorage.getItem("s_courseList")) localStorage.removeItem("s_courseList");
                 if (localStorage.getItem("s_unNodeList")) localStorage.removeItem("s_unNodeList");
                 config.isRead = false;
-                CourseList = unNodeList = [];
+                CourseList = [];
             } else {
                 CourseList = JSON.parse(localStorage.getItem("s_courseList")) || [];
-                unNodeList = JSON.parse(localStorage.getItem("s_unNodeList")) || [];
                 config.isRead = true;
             }
         }
@@ -930,18 +941,8 @@
             })
         }
 
-        function updataData(str) {
-            str = str.split("-");
-            for (const v of str) {
-                switch (v) {
-                    case "c":
-                        localStorage.setItem('s_courseList', JSON.stringify(CourseList));
-                        break;
-                    case "u":
-                        localStorage.setItem('s_unNodeList', JSON.stringify(unNodeList));
-                        break;
-                }
-            }
+        function updataData() {
+            localStorage.setItem('s_courseList', JSON.stringify(CourseList));
         }
 
         function setError(e) {
@@ -1211,7 +1212,7 @@
             <div class="menu-item">
                 <span>请求发送速度</span>
                 <div>
-                    [<input type="text" placeholder="1-4" data-default="2" id="ajax-set" value="2">秒修改一次]
+                    [<input type="text" placeholder="1-4" data-default="3" id="ajax-set" value="3">秒修改一次]
                 </div>
             </div>
             <div class="menu-item">
