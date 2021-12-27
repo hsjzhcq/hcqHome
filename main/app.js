@@ -51,7 +51,7 @@
                 index: [0, 0, 0], //进度索引[课程索引,模块索引,节点索引,子节点索引]
                 nowDomOrVideo: 0, //当前是文档还是视频[0文档,1视频]
                 unIndex: 0, //未完成索引
-                runOut = null, //运行定时器
+                runOut :null, //运行定时器
                 isRead: false, //是否为读取
                 isInit: false, //是否初始化
                 close: false, //是否关闭一次
