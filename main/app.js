@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-27 13:22:17
+ * @LastEditTime: 2021-12-27 14:18:24
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -538,6 +538,7 @@
                         Console(JumpTxt);
                     }
                 }
+                if (config.close) return;
                 Console(`当前课程已成功完成`);
                 configInit(3);
                 CourseList.splice(config.index[0], 1);
@@ -625,8 +626,10 @@
                 config.errorNum = 0;
                 config.ajaxSpeed = config.speed;
             } catch (e) {
-                Console(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
-                config.errorNum++;
+                if (!isSw) {
+                    Console(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
+                    config.errorNum++;
+                }
                 if (config.errorNum > 3) {
                     Console(`当前节点可能异常,暂时跳过`);
                     return 1
@@ -684,7 +687,7 @@
                     config.isPause = config.close = false;
                     config.ajaxSpeed = config.speed;
                     getCourseLists(0);
-                }, config.ajaxSpeed);
+                }, config.ajaxSpeed + 1000);
             }
         });
         $couresView.on("click", "li", function() {
