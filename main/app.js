@@ -626,7 +626,7 @@
                 config.errorNum = 0;
                 config.ajaxSpeed = config.speed;
             } catch (e) {
-                if (!isSw) {
+                if (!config.close) {
                     Console(`获取异常,返回[状态码:${e.status},错误信息${e.statusText}]`);
                     config.errorNum++;
                 }
