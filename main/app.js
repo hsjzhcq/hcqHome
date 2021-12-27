@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-27 16:10:22
+ * @LastEditTime: 2021-12-27 19:44:02
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -51,7 +51,7 @@
                 index: [0, 0, 0], //进度索引[课程索引,模块索引,节点索引,子节点索引]
                 nowDomOrVideo: 0, //当前是文档还是视频[0文档,1视频]
                 unIndex: 0, //未完成索引
-                runOut :null, //运行定时器
+                runOut: null, //运行定时器
                 isRead: false, //是否为读取
                 isInit: false, //是否初始化
                 close: false, //是否关闭一次
@@ -299,7 +299,7 @@
             }
         }
         var $Script = new _script(typeIndex);
-        async function getCourseLists(is) {
+        async function getCourseLists() {
             try {
                 if (config.isRead && CourseList.length != 0) {
                     let data = await $Script.getCourseLists();
@@ -318,7 +318,6 @@
                 config.pauseNode = "getCourseLists";
                 if (CourseList.length != 0) {
                     if (!config.isInit) { CourseListInit() } else {
-                        if (is != 0) filterIndex();
                         setTimeOut(getModuleLists);
                     }
                 } else {
@@ -605,7 +604,7 @@
                                 } else {
                                     Console(`修改失败！错误码为${request.code},错误信息${request.msg}`);
                                     Console(`正在恢复默认速度,并进行重试`);
-                                    $("#video-set").val((config.ajaxSpeed = config.videoRequestSpeed = 10000)/1000);
+                                    $("#video-set").val((config.ajaxSpeed = config.videoRequestSpeed = 10000) / 1000);
                                     $("#video-time-set").val(config.videoAddSpeed = 15);
                                     config.errorNum++;
                                     time -= sp;
@@ -683,13 +682,13 @@
             if ($(this).attr("now") == undefined) {
                 $(this).attr("now", "").siblings("div[now]").removeAttr("now");
                 let i = +$(this).index();
-                config.index = [i, 0, 0, 0];
+                config.index = [i, 0, 0];
                 unNodeList = [];
                 config.isPause = config.close = true;
                 setTimeout(() => {
                     config.isPause = config.close = false;
                     config.ajaxSpeed = config.speed;
-                    getCourseLists(0);
+                    getCourseLists();
                 }, config.ajaxSpeed + 1000);
             }
         });
@@ -972,7 +971,6 @@
                             $run.attr("type", "paused");
                             $run.text("暂停");
                             config.isPause = false;
-                            --config.index[0];
                             getCourseLists();
                         }, 60000);
                     } else {
