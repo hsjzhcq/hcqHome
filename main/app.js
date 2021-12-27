@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-27 14:18:24
+ * @LastEditTime: 2021-12-27 16:10:22
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -51,6 +51,7 @@
                 index: [0, 0, 0], //进度索引[课程索引,模块索引,节点索引,子节点索引]
                 nowDomOrVideo: 0, //当前是文档还是视频[0文档,1视频]
                 unIndex: 0, //未完成索引
+                runOut = null, //运行定时器
                 isRead: false, //是否为读取
                 isInit: false, //是否初始化
                 close: false, //是否关闭一次
@@ -604,9 +605,11 @@
                                 } else {
                                     Console(`修改失败！错误码为${request.code},错误信息${request.msg}`);
                                     Console(`正在恢复默认速度,并进行重试`);
-                                    $("#video-set").val(config.ajaxSpeed = (config.videoRequestSpeed = 10000) / 1000);
+                                    $("#video-set").val(config.ajaxSpeed = config.videoRequestSpeed = 10000);
                                     $("#video-time-set").val(config.videoAddSpeed = 15);
                                     config.errorNum++;
+                                    time -= sp;
+                                    i--;
                                     if (config.errorNum > 3) {
                                         Console(`连续异常3次已暂停,如有重复异常过多,可刷新页面重新运行该脚本`);
                                         $run.click();
@@ -717,6 +720,10 @@
                 $(this).attr("type", "paused");
                 $(this).text("暂停");
                 config.isPause = config.close = false;
+                if (config.runOut != null) {
+                    clearTimeout(config.runOut);
+                    config.runOut = null;
+                }
                 if (config.pauseNode) {
                     Console("已启动脚本运行");
                     eval(config.pauseNode + "()");
@@ -728,6 +735,9 @@
                 $(this).removeAttr("type", "paused");
                 $(this).text("运行");
                 config.isPause = config.close = true;
+                config.runOut = setTimeout(() => {
+                    if ($(this).attr("type") == "paused") $run.click();
+                }, 60000)
                 setTimeOut(() => { Console("已暂停脚本运行") });
             }
         });
@@ -957,7 +967,7 @@
                         Console(`失败次数过多，1分钟后将尝试重新执行`);
                         Console(`失败原因可能为[登录状态失效，网络异常，账户信息异常]，建议刷新本页面成功后再重新执行该脚本`);
                         $run.click();
-                        config.tiemOut = setTimeout(() => {
+                        setTimeout(() => {
                             Console(`正在尝试重新执行`);
                             $run.attr("type", "paused");
                             $run.text("暂停");
