@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-27 19:44:02
+ * @LastEditTime: 2021-12-29 21:11:05
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -68,10 +68,11 @@
             },
             CourseList = null, //未完成课程对象树
             unNodeList = []; //未完成子节点索引树
-        setTimeOut(() => {
+        setTimeOut(async() => {
             userInit();
             Console("查询用户信息中。。。请稍后");
-            if (/token=.*^/.test(document.cookie)) {
+            let res = await _ajax(typeIndex ? "/portal/LoginMooc/getUserInfo" : "/api/student/Studio/index"); //查询用户信息
+            if (res == null || res.code == -1) {
                 alert("请登录后再执行该脚本！");
                 setTimeout(() => {
                     location.reload();
@@ -84,6 +85,7 @@
                 Console(`[${name}]用户您好，欢迎━(*｀∀´*)ノ亻!使用本脚本，该脚本已更新为2.0版本`);
                 Console(`如在使用过程中出现BUG等情况,可反馈给作者<a href="tencent://message/?uin=2533094475&Site=admin5.com&Menu=yes">点我联系</a>`);
                 if (typeIndex) Console(`该脚本不支持做测验题,所以会出现课程未完成但没办法全部完成子节点情况，是因为跳过了测验题，建议手动完成测验题再执行该脚本或者忽视测验题`);
+                $run.attr("on", "load");
             }
         });
         class _script { //该类只关心返回什么样的数据
@@ -665,8 +667,9 @@
         });
         $sw_box.on("click", "li", function() {
             if ($(this).attr("on") == undefined) {
-                if (confirm(`是否切换到${$(this).text()}平台`))
+                confirm(`是否切换到${$(this).text()}平台`, () => {
                     window.location.href = `${typeHome[$(this).data("type")]}`;
+                })
             }
         });
         $("#clear-info").click(function() {
@@ -1077,7 +1080,8 @@
         .btn:hover {color: #fff !important;background-color: rgba(255, 255, 255, .2)}
         .switch-platform {--color: #6A82FB;border: 1px solid #6A82FB;color: #6A82FB}
         .switch-platform[show=on] {background-color: #6A82FB;color: #fff}
-        #hcq-content .mian-run {--color: #2ECD71;border: 1px solid #2ECD71;color: #2ECD71}
+        #hcq-content .mian-run {--color: #2ECD71;border: 1px solid #2ECD71;color: #2ECD71;pointer-events: none}
+        #hcq-content .mian-run[on=load]{pointer-events: auto}
         #hcq-content .mian-run[type=paused] {--color: #ee5d5c;border: 1px solid#ee5d5c;color: #ee5d5c}
         #hcq-content .mian-run::after,.switch-platform::after {content: "";position: absolute;top: 0;bottom: 0;left: 0;
             right: 0;width: 100%;height: 100%;transform: scaleX(0);z-index: -1;transition: transform .35s}
