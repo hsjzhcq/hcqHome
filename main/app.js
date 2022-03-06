@@ -828,9 +828,9 @@
                             var text="";
                             if(config.Jump===2) text=",并关闭跳过视频";
                             Console(`已开启跳过文档模式${text}`);
-                            if (config.nowDomOrVideo === 0) $jumpThis.click();
                             config.Jump = 1;
                             $jumpVideo.removeClass("onck");
+                            if (config.nowDomOrVideo === 0) $jumpThis.click();
                         } else {
                             Console(`已关闭跳过文档模式`);
                             config.Jump = 0;
@@ -841,9 +841,9 @@
                             var text="";
                             if(config.Jump===1) text=",并关闭跳过文档";
                             Console(`已开启跳过视频模式${text}`);
-                            if (config.nowDomOrVideo === 1) $jumpThis.click();
                             config.Jump = 2;
                             $jumpDom.removeClass("onck");
+                            if (config.nowDomOrVideo === 1) $jumpThis.click();
                         } else {
                             Console(`已关闭跳过视频模式`);
                             config.Jump = 0;
