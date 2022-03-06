@@ -825,32 +825,35 @@
                         break;
                     case "jump-dom":
                         if (!$(this).is(".onck")) {
-                            Console(`已开启跳过文档模式,并关闭跳过视频`);
-                            //if (config.nowDomOrVideo === 0) $jumpThis.click();
+                            var text="";
+                            if(config.Jump===2) text=",并关闭跳过视频";
+                            Console(`已开启跳过文档模式${text}`);
+                            if (config.nowDomOrVideo === 0) $jumpThis.click();
                             config.Jump = 1;
                             $jumpVideo.removeClass("onck");
                         } else {
                             Console(`已关闭跳过文档模式`);
                             config.Jump = 0;
                         }
-                        config.nowDomOrVideo = -1;
                         break;
                     case "jump-video":
                         if (!$(this).is(".onck")) {
-                            Console(`已开启跳过视频模式,并关闭跳过文档`);
-                            //if (config.nowDomOrVideo === 1) $jumpThis.click();
+                            var text="";
+                            if(config.Jump===1) text=",并关闭跳过文档";
+                            Console(`已开启跳过视频模式${text}`);
+                            if (config.nowDomOrVideo === 1) $jumpThis.click();
                             config.Jump = 2;
                             $jumpDom.removeClass("onck");
                         } else {
                             Console(`已关闭跳过视频模式`);
                             config.Jump = 0;
                         }
-                        config.nowDomOrVideo = -1;
                         break;
                     case "jump-this":
                         on = false;
                         config.close = true;
                         config.unIndex++;
+                        config.nowDomOrVideo = -1;
                         $(this).addClass("loader");
                         Console(`已跳过当前子节点`);
                         clearTimeout(config.tiemOut);
