@@ -502,13 +502,15 @@
                     let node = CourseList[config.index[0]].module[arr[0]].topic[arr[1]].Nodes[arr[2]];
                     let isJump = false,
                         JumpTxt = "";
+                    let nodeType = /视频|音频/.test(node.type);
+                    config.nowDomOrVideo = +nodeType;
                     switch (config.Jump) {
                         case 1:
-                            if (!(/视频|音频/.test(node.type))) isJump = true;
+                            if (!nodeType) isJump = true;
                             JumpTxt = "当前文档类型已跳过";
                             break;
                         case 2:
-                            if (/视频|音频/.test(node.type)) isJump = true;
+                            if (nodeType) isJump = true;
                             JumpTxt = "当前视频/音频已跳过";
                             break;
                     }
@@ -571,7 +573,6 @@
                     request = null;
                 Console(`当前小节 类型:[${obj.info.type}] 名称:[${obj.info.name}] 长度:[${len}]`);
                 if (!obj.info.is) {
-                    config.nowDomOrVideo = 0;
                     config.ajaxSpeed = config.domRequestSpeed;
                     if ($Script.type) {
                         obj.data.auvideoLength = len;
@@ -579,7 +580,6 @@
                     }
                     request = await _ajax($Script.url.setProgress, obj.data);
                 } else {
-                    config.nowDomOrVideo = 1;
                     config.ajaxSpeed = config.videoRequestSpeed;
                     if ($Script.type) {
                         obj.data.moduleId = node.moduleId;
