@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2021-12-29 21:11:05
+ * @LastEditTime: 2022-03-06 14:18:41
  * @LastEditors: Please set LastEditors
  */
 (() => {
@@ -417,7 +417,7 @@
                         Console(`获取模块节点进度${index}/${len}`);
                     } else {
                         config.index[1] = ++index;
-                        await setTimeOut(() => { Console(`读取模块节点进度${index}/${len}`) });
+                         Console(`读取模块节点进度${index}/${len}`);
                     }
                 }
                 if (config.close) return;
@@ -504,7 +504,7 @@
                         JumpTxt = "";
                     switch (config.Jump) {
                         case 1:
-                            if (!/视频|音频/.test(node.type)) isJump = true;
+                            if (!(/视频|音频/.test(node.type))) isJump = true;
                             JumpTxt = "当前文档类型已跳过";
                             break;
                         case 2:
@@ -513,19 +513,19 @@
                             break;
                     }
                     if (!isJump) {
-                        let updata = true;
+                        let updata = false;
                         let res = await $Script.getChildNodeInfo(node);
                         if (config.close) continue;
                         $jumpThis.removeClass("loader");
                         if (res.cellPercent != 100) {
                             let datas = await SetProgress(res, node);
-                            if (datas === 0) {
-                                updata = false;
+                            if (datas !== 0 && datas !== 1) {
+                                updata = true;
                             } else if (datas === 1) {
-                                updata = false;
                                 config.unIndex++;
                             }
                         } else {
+                            config.unIndex++;
                             Console("本小节已完成！");
                         };
                         if (updata) {
@@ -537,6 +537,7 @@
                         $jumpThis.addClass("loader");
                         if (config.unIndex >= unNodeList.length) config.unIndex = 0;
                     } else {
+                        config.unIndex++;
                         Console(JumpTxt);
                     }
                 }
@@ -825,37 +826,36 @@
                     case "jump-dom":
                         if (!$(this).is(".onck")) {
                             Console(`已开启跳过文档模式,并关闭跳过视频`);
-                            if (config.nowDomOrVideo === 0) $jumpThis.click();
+                            //if (config.nowDomOrVideo === 0) $jumpThis.click();
                             config.Jump = 1;
                             $jumpVideo.removeClass("onck");
                         } else {
                             Console(`已关闭跳过文档模式`);
                             config.Jump = 0;
                         }
+                        config.nowDomOrVideo = -1;
                         break;
                     case "jump-video":
                         if (!$(this).is(".onck")) {
                             Console(`已开启跳过视频模式,并关闭跳过文档`);
-                            if (config.nowDomOrVideo === 1) $jumpThis.click();
+                            //if (config.nowDomOrVideo === 1) $jumpThis.click();
                             config.Jump = 2;
                             $jumpDom.removeClass("onck");
                         } else {
                             Console(`已关闭跳过视频模式`);
                             config.Jump = 0;
                         }
+                        config.nowDomOrVideo = -1;
                         break;
                     case "jump-this":
                         on = false;
                         config.close = true;
                         config.unIndex++;
                         $(this).addClass("loader");
-                        setTimeout(() => {
-                            Console(`已跳过当前子节点`);
-                        }, config.ajaxSpeed - 1000);
-                        setTimeout(() => {
-                            Console(`已跳过当前子节点`);
-                            config.ajaxSpeed = config.speed;
-                        }, config.ajaxSpeed);
+                        Console(`已跳过当前子节点`);
+                        clearTimeout(config.tiemOut);
+                        config.ajaxSpeed = config.speed;
+                        getChildNodeInfo();
                         break;
                 }
                 if (is) dom.toggleClass("show").siblings(".coures-item.show").removeClass("show");
