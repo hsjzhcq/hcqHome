@@ -1,9 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2021-12-16 18:29:22
- * @LastEditTime: 2022-03-06 14:18:41
- * @LastEditors: Please set LastEditors
- */
 (() => {
     var typeHome = ["https://zjy2.icve.com.cn", "https://mooc.icve.com.cn"], //平台类型数组
         typeIndex = typeHome.indexOf(location.origin); //当前平台
@@ -305,16 +299,20 @@
             try {
                 if (config.isRead && CourseList.length != 0) {
                     let data = await $Script.getCourseLists();
+                    let arr = [];
+                    f: for (const r of data.list) {
+                        for (const e of CourseList) {
+                            if (e.openId == r.openId) {
+                                e.progress = r.progress;
+                                continue f;
+                            }
+                        }
+                        arr.push(r);
+                    }
                     if (data.list.length != CourseList.length) {
                         Console("课程有变动，重新更新课程。。。");
-                        let arr = [];
-                        f: for (const r of data.list) {
-                            for (const e of CourseList) {
-                                if (e.openId == r.openId) continue f;
-                            }
-                            arr.push(r);
-                        }
                         CourseList.push(...arr);
+                        updataData();
                     }
                 }
                 config.pauseNode = "getCourseLists";
@@ -380,7 +378,6 @@
                 if (CourseList[index].module.length == 0) {
                     let data = await $Script.getModuleLists();
                     CourseList[index].module = data.module;
-                    updataData();
                     let len = data.info.len,
                         unlen = data.info.unlen;
                     await setTimeOut(() => {
@@ -417,7 +414,7 @@
                         Console(`获取模块节点进度${index}/${len}`);
                     } else {
                         config.index[1] = ++index;
-                         Console(`读取模块节点进度${index}/${len}`);
+                        Console(`读取模块节点进度${index}/${len}`);
                     }
                 }
                 if (config.close) return;
@@ -825,8 +822,8 @@
                         break;
                     case "jump-dom":
                         if (!$(this).is(".onck")) {
-                            var text="";
-                            if(config.Jump===2) text=",并关闭跳过视频";
+                            var text = "";
+                            if (config.Jump === 2) text = ",并关闭跳过视频";
                             Console(`已开启跳过文档模式${text}`);
                             config.Jump = 1;
                             $jumpVideo.removeClass("onck");
@@ -838,8 +835,8 @@
                         break;
                     case "jump-video":
                         if (!$(this).is(".onck")) {
-                            var text="";
-                            if(config.Jump===1) text=",并关闭跳过文档";
+                            var text = "";
+                            if (config.Jump === 1) text = ",并关闭跳过文档";
                             Console(`已开启跳过视频模式${text}`);
                             config.Jump = 2;
                             $jumpDom.removeClass("onck");
@@ -859,6 +856,17 @@
                         clearTimeout(config.tiemOut);
                         config.ajaxSpeed = config.speed;
                         getChildNodeInfo();
+                        break;
+                    case "clearCache":
+                        on = false;
+                        confirm("是否清空缓存?(如有异常时使用)", () => {
+                            localStorage.setItem("scriptID", "clearCache");
+                            window.wxc.xcConfirm("清除成功,点击确认后重新执行脚本", "info", {
+                                onOk: () => {
+                                    location.reload();
+                                }
+                            });
+                        })
                         break;
                 }
                 if (is) dom.toggleClass("show").siblings(".coures-item.show").removeClass("show");
@@ -937,7 +945,6 @@
                 localStorage.setItem("scriptID", id);
                 Console("对运行环境数据初始化中。。。");
                 if (localStorage.getItem("s_courseList")) localStorage.removeItem("s_courseList");
-                if (localStorage.getItem("s_unNodeList")) localStorage.removeItem("s_unNodeList");
                 config.isRead = false;
                 CourseList = [];
             } else {
@@ -946,10 +953,6 @@
             }
         }
 
-        function filterIndex() {
-            let len = CourseList.length;
-            config.index[0] >= --len ? config.index[0] = len : config.index[0]++;
-        }
 
         function setTimeOut(fn) {
             return new Promise(res => {
@@ -1269,6 +1272,7 @@
                 </div>
                 <div data-type="support">支持作者</div>
                 <div data-type="changeBg">更换背景</div>
+                <div data-type="clearCache">清除缓存</div>
             </div>
         </div>
     </div>`
