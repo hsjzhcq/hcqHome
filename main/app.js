@@ -524,7 +524,7 @@
                                 config.unIndex++;
                             }
                         } else {
-                            config.unIndex++;
+                            updata = true;
                             Console("本小节已完成！");
                         };
                         if (updata) {
@@ -698,20 +698,14 @@
                 $(this).parent().toggleClass("open");
             } else {
                 if ($v_btn.is(".onck")) $v_btn.click();
-                if ($couresView.attr("load") == undefined) {
-                    if (!$(this).is(".isOk")) {
-                        $couresView.attr("load", "");
-                        config.ajaxSpeed = config.speed;
-                        config.unIndex = unNodeList.indexOf($(this).data("un"));
-                        config.close = true;
-                        setTimeout(() => {
-                            $couresView.removeAttr("load");
-                        }, config.ajaxSpeed);
-                    } else {
-                        Console("当前子节点已完成，无需执行")
-                    }
+                if (!$(this).is(".isOk")) {
+                    config.ajaxSpeed = config.speed;
+                    config.unIndex = unNodeList.indexOf($(this).data("un"));
+                    config.close = true;
+                    clearTimeout(config.tiemOut);
+                    getChildNodeInfo();
                 } else {
-                    Console("上一次切换还未执行，请等待...")
+                    Console("当前子节点已完成，无需执行")
                 }
             }
         });
