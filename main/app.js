@@ -312,8 +312,8 @@
                     if (data.list.length != CourseList.length) {
                         Console("课程有变动，重新更新课程。。。");
                         CourseList.push(...arr);
-                        updataData();
                     }
+                    updataData();
                 }
                 config.pauseNode = "getCourseLists";
                 if (CourseList.length != 0) {
