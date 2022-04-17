@@ -35,7 +35,7 @@
             $jumpThis = $menubar.children("[data-type=jump-this]"),
             $ch_btn = $menubar.children("[data-type=change]"),
             $c_btn = $menubar.children("[data-type=changeBg]"),
-            $countDown = $couresMenu.find("tiem"),
+            $countDown = $couresMenu.find("time"),
             $run = $(".mian-run");
         $sw_box.find("li[data-type=" + typeIndex + "]").attr("on", "on");
         let bgUrl = localStorage.getItem("s_bg");
@@ -45,11 +45,10 @@
                 index: [0, 0, 0], //进度索引[课程索引,模块索引,节点索引,子节点索引]
                 nowDomOrVideo: 0, //当前是文档还是视频[0文档,1视频]
                 unIndex: 0, //未完成索引
-                runOut: null, //运行定时器
                 isRead: false, //是否为读取
                 isInit: false, //是否初始化
                 close: false, //是否关闭一次
-                tiemOut: null, //5分钟后重试定时器存放
+                timeOut: null, //5分钟后重试定时器存放
                 speed: 3000, //执行速度
                 ajaxSpeed: 2000, //ajax发送与内容添加速度
                 isPause: false, //是否暂停
@@ -58,7 +57,8 @@
                 domRequestSpeed: 2000, //文档请求速度
                 videoRequestSpeed: typeIndex ? 5000 : 10000, //视频请求速度
                 videoAddSpeed: 15, //视频增加速度
-                Jump: 0 //是否跳过，1跳过文档，2跳过视频，其他不跳过
+                Jump: 0, //是否跳过，1跳过文档，2跳过视频，其他不跳过
+                _Lock: true //操作锁
             },
             CourseList = null, //未完成课程对象树
             unNodeList = []; //未完成子节点索引树
@@ -79,7 +79,7 @@
                 Console(`[${name}]用户您好，欢迎━(*｀∀´*)ノ亻!使用本脚本，该脚本已更新为2.0版本`);
                 Console(`如在使用过程中出现BUG等情况,可反馈给作者<a href="tencent://message/?uin=2533094475&Site=admin5.com&Menu=yes">点我联系</a>`);
                 if (typeIndex) Console(`该脚本不支持做测验题,所以会出现课程未完成但没办法全部完成子节点情况，是因为跳过了测验题，建议手动完成测验题再执行该脚本或者忽视测验题`);
-                $run.attr("on", "load");
+                config._Lock = false;
             }
         });
         class _script { //该类只关心返回什么样的数据
@@ -372,7 +372,6 @@
         async function getModuleLists() {
             let index = config.index[0];
             try {
-                if (config.close) config.close = false;
                 config.pauseNode = "getModuleLists";
                 Console(`当前课程名称${CourseList[index].name}`);
                 if (CourseList[index].module.length == 0) {
@@ -400,7 +399,6 @@
             var i = config.index[0],
                 index = config.index[1];
             try {
-                if (config.close) config.close = false;
                 config.pauseNode = "getNodeLists";
                 Console(`获取本课程模块节点信息中...`);
                 let len = CourseList[i].module.length;
@@ -432,7 +430,6 @@
                 mI = config.index[1],
                 tI = config.index[2];
             try {
-                if (config.close) config.close = false;
                 config.pauseNode = "getChildNodeLists";
                 Console(`准备获取模块子节点信息...`);
                 let mL = CourseList[i].module.length;
@@ -492,7 +489,7 @@
             try {
                 config.pauseNode = "getChildNodeInfo";
                 while (unNodeList != 0) {
-                    if (config.close) config.close = false;
+                    if (config.close) break;
                     let v = unNodeList[config.unIndex];
                     let arr = v.split("-");
                     Console(`当前子节点信息为${+arr[0] + 1}-${+arr[1] + 1}-${+arr[2] + 1}节点`);
@@ -679,6 +676,7 @@
                 inTime = null;
                 $countDown.parent().remove();
             }
+            let is = true;
             if ($ch_btn.is(".onck")) $ch_btn.click();
             if ($(this).attr("now") == undefined) {
                 $(this).attr("now", "").siblings("div[now]").removeAttr("now");
@@ -691,6 +689,12 @@
                     config.ajaxSpeed = config.speed;
                     getCourseLists();
                 }, config.ajaxSpeed + 1000);
+            } else is = false;
+            if ($run.attr("type") != "run") {
+                if (is) {
+                    Console("已启动脚本运行");
+                    $run.attr("type", "run");
+                } else $run.click()
             }
         });
         $couresView.on("click", "li", function() {
@@ -699,10 +703,11 @@
             } else {
                 if ($v_btn.is(".onck")) $v_btn.click();
                 if (!$(this).is(".isOk")) {
+                    if (config.isPause) Console("请先运行脚本!");
                     config.ajaxSpeed = config.speed;
                     config.unIndex = unNodeList.indexOf($(this).data("un"));
                     config.close = true;
-                    clearTimeout(config.tiemOut);
+                    clearTimeout(config.timeOut);
                     getChildNodeInfo();
                 } else {
                     Console("当前子节点已完成，无需执行")
@@ -710,14 +715,10 @@
             }
         });
         $run.click(function() {
-            if ($(this).attr("type") != "paused") {
-                $(this).attr("type", "paused");
-                $(this).text("暂停");
+            if (config._Lock) return Console("请等待数据查询后执行!");
+            if ($(this).attr("type") != "run") {
+                $(this).attr("type", "run");
                 config.isPause = config.close = false;
-                if (config.runOut != null) {
-                    clearTimeout(config.runOut);
-                    config.runOut = null;
-                }
                 if (config.pauseNode) {
                     Console("已启动脚本运行");
                     eval(config.pauseNode + "()");
@@ -726,13 +727,13 @@
                     getCourseLists();
                 }
             } else {
-                $(this).removeAttr("type", "paused");
-                $(this).text("运行");
+                $(this).removeAttr("type");
                 config.isPause = config.close = true;
-                config.runOut = setTimeout(() => {
-                    if ($(this).attr("type") == "paused") $run.click();
-                }, 60000)
-                setTimeOut(() => { Console("已暂停脚本运行") });
+                if (config.timeOut != null) {
+                    clearTimeout(config.timeOut);
+                    config.timeOut = null;
+                }
+                Console("已暂停脚本运行");
             }
         });
         $speedSet.blur(function() {
@@ -815,6 +816,7 @@
                         dom = $changeBg;
                         break;
                     case "jump-dom":
+                        if (config.close) return Console("运行脚本后再使用")
                         if (!$(this).is(".onck")) {
                             var text = "";
                             if (config.Jump === 2) text = ",并关闭跳过视频";
@@ -828,6 +830,7 @@
                         }
                         break;
                     case "jump-video":
+                        if (config.close) return Console("运行脚本后再使用")
                         if (!$(this).is(".onck")) {
                             var text = "";
                             if (config.Jump === 1) text = ",并关闭跳过文档";
@@ -841,13 +844,14 @@
                         }
                         break;
                     case "jump-this":
+                        if (config.close) return Console("运行脚本后再使用")
                         on = false;
                         config.close = true;
                         config.unIndex++;
                         config.nowDomOrVideo = -1;
                         $(this).addClass("loader");
                         Console(`已跳过当前子节点`);
-                        clearTimeout(config.tiemOut);
+                        clearTimeout(config.timeOut);
                         config.ajaxSpeed = config.speed;
                         getChildNodeInfo();
                         break;
@@ -951,7 +955,7 @@
         function setTimeOut(fn) {
             return new Promise(res => {
                 setTimeout(() => {
-                    res(fn());
+                    if (!config.close) res(fn());
                 }, 1000)
             })
         }
@@ -968,14 +972,11 @@
                     if (config.errorNum > 3) {
                         Console(`失败次数过多，1分钟后将尝试重新执行`);
                         Console(`失败原因可能为[登录状态失效，网络异常，账户信息异常]，建议刷新本页面成功后再重新执行该脚本`);
-                        $run.click();
-                        setTimeout(() => {
-                            Console(`正在尝试重新执行`);
-                            $run.attr("type", "paused");
-                            $run.text("暂停");
-                            config.isPause = false;
-                            getCourseLists();
-                        }, 60000);
+                        Console(`正在尝试重新执行`);
+                        clearTimeout(config.timeOut);
+                        config.timeOut = setTimeout(() => {
+                            $run.attr("type", "").click();
+                        }, 60000)
                     } else {
                         Console(`正在尝试重新获取第${config.errorNum}次`);
                         eval(config.pauseNode + "()");
@@ -996,9 +997,9 @@
             return new Promise((res, rej) => {
                 if (config.isPause === true) {
                     rej("已暂停运行");
-                    config.tiemOut = null;
+                    config.timeOut = null;
                 } else {
-                    config.tiemOut = setTimeout(() => {
+                    config.timeOut = setTimeout(() => {
                         if (config.isPause === true) {
                             rej("已暂停运行");
                         } else {
@@ -1080,9 +1081,10 @@
         .btn:hover {color: #fff !important;background-color: rgba(255, 255, 255, .2)}
         .switch-platform {--color: #6A82FB;border: 1px solid #6A82FB;color: #6A82FB}
         .switch-platform[show=on] {background-color: #6A82FB;color: #fff}
-        #hcq-content .mian-run {--color: #2ECD71;border: 1px solid #2ECD71;color: #2ECD71;pointer-events: none}
-        #hcq-content .mian-run[on=load]{pointer-events: auto}
-        #hcq-content .mian-run[type=paused] {--color: #ee5d5c;border: 1px solid#ee5d5c;color: #ee5d5c}
+        #hcq-content .mian-run {--color: #2ECD71;border: 1px solid #2ECD71;color: #2ECD71;}
+        #hcq-content .mian-run>span::before{content:"运行"}
+        #hcq-content .mian-run[type=run] {--color: #ee5d5c;border: 1px solid#ee5d5c;color: #ee5d5c}
+        #hcq-content .mian-run[type=run]>span::before{content:"暂停"}
         #hcq-content .mian-run::after,.switch-platform::after {content: "";position: absolute;top: 0;bottom: 0;left: 0;
             right: 0;width: 100%;height: 100%;transform: scaleX(0);z-index: -1;transition: transform .35s}
         .switch-platform::after,#hcq-content .mian-run::after {background-color: var(--color)}
@@ -1173,7 +1175,7 @@
             </div>
             <div class="left-item">
                 <div class="mian-run btn">
-                    <span>运行</span>
+                    <span></span>
                 </div>
             </div>
         </div>
@@ -1191,7 +1193,7 @@
                 <div class="info-box"></div>
             </div>
             <div class="coures-item coures-menu">
-                <span style="display: block;width: 100%;text-align: center;">请在<tiem>15</tiem>秒内选择课程，过时自动选择</span>
+                <span style="display: block;width: 100%;text-align: center;">请在<time>15</time>秒内选择课程，过时自动选择</span>
             </div>
             <div class="coures-item" style="background-color: #666;color: #fff;overflow-y: auto;" id="supportBox">
                 <br> <br>
