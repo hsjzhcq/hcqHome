@@ -14,6 +14,8 @@
         if ($("body").attr("add") == undefined) {
             $("head").eq(0).append("<style>" + getStyle() + "</style>");
             $("body").attr("add", "").append(getHtml());
+        }else {
+            return alert("请不要重复加载脚本");
         }
         var $main = $("#hcq-main"),
             $c_left = $("#hcq-content-left"),
