@@ -27,7 +27,7 @@
             $c_btn = $menubar.children("[data-type=changeBg]"),
             $countDown = $couresMenu.find("time"),
             $run = $(".mian-run");
-        $sw_box.find("li[data-type='1']").attr("on", "on");
+        $sw_box.find("li[data-type='2']").attr("on", "on");
         let bgUrl = localStorage.getItem("s_bg");
         if (bgUrl) $main.css("background-image", "url(" + bgUrl + ")");
         let inTime = null; //倒计时定时器
