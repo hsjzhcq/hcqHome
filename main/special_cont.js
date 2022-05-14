@@ -50,6 +50,7 @@
                 Jump: 0, //是否跳过，1跳过文档，2跳过视频，其他不跳过
                 _Lock: true //操作锁
             },
+            maxItemView=300,
             CourseList = null, //未完成课程对象树
             unNodeList = []; //未完成子节点索引树
         const AUTHORIZATION = $.cookie("authorization");
@@ -70,6 +71,7 @@
                 Console(`[${name}]用户您好，欢迎━(*｀∀´*)ノ亻!使用本脚本，该脚本为职教云资源库特供版`);
                 Console(`特别提示>>><b style="color:red">刷完课程后,视频部分依旧为灰色,需要手动点击视频等待5秒左右,才可完成!<b>(分析了几个小时,用了几种能想到的方法都没生效,不知道什么情况,进度拉满了,但非得你点击才算完成,离谱)`);
                 Console(`制作不易,您的支持是我更新的最大动力!`);
+                Console(`最新更新>>><b style="color:red">已支持自动完成作业!!!<b>`);
                 config._Lock = false;
             }
         });
@@ -129,17 +131,19 @@
                     },
                     module: data
                 }
-            }
+            } 
             async getNodeLists() { //返回节点数据
                 let index = config.index[0],
                     mIndex = config.index[1];
                 let res = CourseList[index].module[mIndex].topic;
                 return res.map((v, i) => {
+                    let type = v.chapter.ChapterType;
                     return {
                         index: i,
-                        id: v.chapter.Id,
+                        type: type,
+                        id: type === 2 ? v.chapter.ResId : v.chapter.Id,
                         name: v.chapter.Title,
-                        Nodes: { knowleges: v.knowleges, cells: v.cells }
+                        Nodes: { knowleges: v.knowleges || [], cells: v.cells }
                     }
                 })
             }
@@ -147,15 +151,27 @@
                 let index = config.index[0],
                     mIndex = config.index[1],
                     tIndex = config.index[2];
-                let res = CourseList[index].module[mIndex].topic[tIndex].Nodes;
-                let data = [],
+                let res = CourseList[index].module[mIndex].topic[tIndex];
+                if (res.type === 2) {
+                    return {
+                        unNode: [`${mIndex}-${tIndex}-0`],
+                        data: [{
+                            type: "work",
+                            id: res.id,
+                            name: res.name,
+                            unNum: `${mIndex}-${tIndex}-0`
+                        }]
+                    }
+                }
+                let node = res.Nodes,
+                    data = [],
                     unNode = [],
                     unNum = null,
                     i = 0;
-                res.cells.forEach(e => filterData(e));
-                res.knowleges.forEach(v => {
-                    v.cells.forEach(n => filterData(n))
-                })
+                node.cells.forEach(e => filterData(e));
+                node.knowleges.forEach(v => {
+                    v.cells.forEach(n => filterData(n));
+                });
 
                 function filterData(e) {
                     if (e.Status !== 1) {
@@ -307,7 +323,7 @@
                     config.index[1] = ++index;
                 }
                 updataData();
-                Console(`<模块[节点]信息>${config.isRead ? "读取" : "解析"}共耗时: ${(window.performance.now() - start).toFixed(2)} ms`);
+                Console(`<模块[节点]信息>解析共耗时: ${(window.performance.now() - start).toFixed(2)} ms`);
                 if (config.close) return;
                 configInit(1);
                 setTimeOut(() => {
@@ -350,7 +366,7 @@
                     config.index[2] = tI = 0;
                 }
                 updataData();
-                Console(`<模块[子节点]信息>${config.isRead ? "读取" : "解析"}共耗时: ${(window.performance.now() - start).toFixed(2)} ms`);
+                Console(`<模块[子节点]信息>解析共耗时: ${(window.performance.now() - start).toFixed(2)} ms`);
                 if (config.close) return;
                 Console(`已获取本课程所有模块子节点信息`);
                 setTimeOut(() => {
@@ -375,11 +391,7 @@
                 setError(e);
             }
         }
-
-        function getType(v) {
-            return Object.prototype.toString.call(v).slice(8, -1)
-        }
-        async function getChildNodeInfo() {
+         async function getChildNodeInfo() {
             try {
                 config.pauseNode = "getChildNodeInfo";
                 while (unNodeList != 0) {
@@ -403,12 +415,15 @@
                             break;
                     }
                     if (!isJump) {
-                        let updata = false;
-                        let res = await $Script.getChildNodeInfo(node);
-                        Console(`当前小节 类型:[${node.type}] 名称:[${node.name}]`);
+                        let updata = false,
+                            _type = node.type,
+                            _is = _type == "work",
+                            res = null;
+                        if (!_is) res = await $Script.getChildNodeInfo(node);
+                        Console(`当前小节 类型:[${getTypeName(_type)}] 名称:[${node.name}]`);
                         if (config.close) continue;
                         $jumpThis.removeClass("loader");
-                        if (res.works && res.works.Status !== 1) {
+                        if (_is || (res.works && res.works.Status !== 1)) {
                             let datas = await SetProgress(res, node);
                             if (datas !== 0 && datas !== 1) {
                                 updata = true;
@@ -454,29 +469,71 @@
         }
         async function SetProgress(res, node) {
             try {
-                let data = await new Promise(r => {
-                    $.ajax({
-                        url: res.data.statusUrl,
-                        type: 'get',
-                        dataType: "jsonp",
-                        jsonp: "jsonpcallback",
-                        success: function(data) {
-                            r(data);
+                var request = null;
+                switch (node.type) {
+                    case "video":
+                        request = await new Promise((r, e) => {
+                            $.ajax({
+                                url: res.data.statusUrl,
+                                type: 'get',
+                                dataType: "jsonp",
+                                jsonp: "jsonpcallback",
+                                success: function(data) {
+                                    r(data);
+                                },
+                                error: function(rej) {
+                                    e(rej);
+                                }
+                            });
+                        }).then(data => {
+                            return _ajax($Script.url.setProgress, {
+                                cellId: node.id,
+                                learntime: getTime(data.args.duration),
+                                status: data.status || 2
+                            }, 5000);
+                        });
+                        // await _ajax("/study/directory/getPoints", { cellId: res.cell.Id });
+                        break;
+                    case "work":
+                        Console("已获取题目,正在解析答案中...")
+                        let data = await _ajax("/study/Works/works", { courseId: CourseList[config.index[0]].id, assignmentId: node.id })
+                        let arr = [];
+                        for (const v of data.paper.PaperQuestions) {
+                            arr.push({
+                                paperItemId: v.Id,
+                                answer: v.Answers.join("，")
+                            })
                         }
-                    });
-                });
-                // await _ajax("/study/directory/getPoints", { cellId: res.cell.Id });
-                let request = await _ajax($Script.url.setProgress, {
-                    cellId: node.id,
-                    learntime: getTime(data.args.duration),
-                    status: data.status
-                }, 5000);
+                        request = await _ajax("/study/Works/answerOnlineWorks", {
+                            answerId: data.answer.Id,
+                            data: JSON.stringify(arr)
+                        });
+                        Console("当前作业状态:" + request.msg)
+                        break;
+                    case "question":
+                        Console("已获取题目,并开始解析...")
+                        for (const v of res.data.paper.PaperQuestions) {
+                            let answer = v.Answers.join("，");
+                            Console(`题目:[${v.Content}] 答案:[${answer}]`)
+                            let rq = await _ajax("/study/directory/answerpaper", {
+                                works: res.works.Id,
+                                paperItemId: v.Id,
+                                answer
+                            }, 1000);
+                            if (rq.code == 1) { Console("已提交选项!") }
+                        }
+                        request = await _ajax("/study/directory/subPaper", {
+                            studentWorksId: res.works.Id
+                        });
+                        Console("当前作业状态:" + request.msg)
+                        break;
+                }
                 if (request && request.msg && /刷课|禁/.test(request.msg)) {
                     Console(`账户疑似异常，已终止执行`);
                     $run.click();
                 }
                 if (config.close) return 0;
-                if (request.code == 1) Console(`本小节已完成！`);
+                if (request && request.code == 1) Console(`本小节已完成！`);
                 config.errorNum = 0;
             } catch (e) {
                 if (!config.close) {
@@ -492,6 +549,27 @@
             }
         }
 
+        function getTypeName(key) {
+            switch (key) {
+                case "work":
+                    return "作业";
+                case "question":
+                    return "习题";
+                case "video":
+                    return "视频";
+                case "audio":
+                    return "音频";
+                case "image":
+                    return "图片";
+                case "text":
+                    return "文档";
+                default:
+                    return key;
+            }
+        }
+        function getType(v) {
+            return Object.prototype.toString.call(v).slice(8, -1)
+        }
         function getTime(v) {
             if (getType(v) !== "String") return 10;
             let times = v.split(":");
@@ -548,9 +626,8 @@
             } else {
                 if ($v_btn.is(".onck")) $v_btn.click();
                 if (!$(this).is(".isOk")) {
-                    if (config.isPause) Console("请先运行脚本!");
+                    if (config.isPause)return Console("请先运行脚本!");
                     config.unIndex = unNodeList.indexOf($(this).data("un"));
-                    config.close = true;
                     clearTimeout(config.timeOut);
                     getChildNodeInfo();
                 } else {
@@ -690,7 +767,6 @@
                     case "jump-this":
                         if (config.close) return Console("运行脚本后再使用")
                         on = false;
-                        config.close = true;
                         config.unIndex++;
                         config.nowDomOrVideo = -1;
                         $(this).addClass("loader");
@@ -746,7 +822,7 @@
                         for (const r of e.Nodes) {
                             html += `
                         <li class="view-3 ${r.unNum ? "" : "isOk"}" data-un=${r.unNum} >
-                        <b>${r.type}</b>
+                        <b>${getTypeName(r.type)}</b>
                         <span>${r.name}</span>
                         </li>`;
                         }
@@ -774,7 +850,7 @@
         }
 
         function userInit() {
-            let id = localStorage.getItem("userName") + "_v.2";
+            let id = localStorage.getItem("userName") + "_v.3";
             if (localStorage.getItem("scriptID") !== id) {
                 localStorage.setItem("scriptID", id);
                 Console("对运行环境数据初始化中。。。");
@@ -823,6 +899,10 @@
         }
 
         function Console(e) {
+            if (--maxItemView < 0) {
+                maxItemView = 300;
+                $consoleInfo.html("");
+            }
             let dom = $(`<span class="text-ellipsis ">${e}</span>`);
             $consoleInfo.append(dom);
             dom[0].scrollIntoView();
