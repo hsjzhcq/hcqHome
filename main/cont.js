@@ -694,10 +694,9 @@
             } else {
                 if ($v_btn.is(".onck")) $v_btn.click();
                 if (!$(this).is(".isOk")) {
-                    if (config.isPause) Console("请先运行脚本!");
+                    if (config.isPause)return Console("请先运行脚本!");
                     config.ajaxSpeed = config.speed;
                     config.unIndex = unNodeList.indexOf($(this).data("un"));
-                    config.close = true;
                     clearTimeout(config.timeOut);
                     getChildNodeInfo();
                 } else {
@@ -837,7 +836,6 @@
                     case "jump-this":
                         if (config.close) return Console("运行脚本后再使用")
                         on = false;
-                        config.close = true;
                         config.unIndex++;
                         config.nowDomOrVideo = -1;
                         $(this).addClass("loader");
