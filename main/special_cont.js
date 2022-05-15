@@ -472,26 +472,25 @@
                 var request = null;
                 switch (node.type) {
                     case "video":
-                        request = await new Promise((r, e) => {
+                       let datas = await new Promise((r, rej) => {
                             $.ajax({
                                 url: res.data.statusUrl,
                                 type: 'get',
                                 dataType: "jsonp",
                                 jsonp: "jsonpcallback",
-                                success: function(data) {
-                                    r(data);
+                                success: function(v) {
+                                    r(v);
                                 },
-                                error: function(rej) {
-                                    e(rej);
+                                error: function(e) {
+                                    rej(e);
                                 }
                             });
-                        }).then(data => {
-                            return _ajax($Script.url.setProgress, {
-                                cellId: node.id,
-                                learntime: getTime(data.args.duration),
-                                status: data.status || 2
-                            }, 5000);
                         });
+                        request = await _ajax($Script.url.setProgress, {
+                            cellId: node.id,
+                            learntime: getTime(datas.args.duration),
+                            status: datas.status || 2
+                        }, 5000);
                         // await _ajax("/study/directory/getPoints", { cellId: res.cell.Id });
                         break;
                     case "work":
@@ -542,6 +541,7 @@
                 }
                 if (config.errorNum > 3) {
                     Console(`当前节点可能异常,暂时跳过`);
+                    config.errorNum=0;
                     return 1
                 } else {
                     return 0
