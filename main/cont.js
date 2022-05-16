@@ -67,7 +67,7 @@
                 $c_left.find(".user-name").text(name);
                 $c_left.find(".stuNum").text(localStorage.getItem("userName"));
                 Console(`[${name}]用户您好，欢迎━(*｀∀´*)ノ亻!使用本脚本，该脚本已更新为2.0版本`);
-                Console(`最新更新:<b style="color:red"> >>>提前更新了职教云资源库的支持,有需要的小伙伴可以进行体验啦!</b>`);
+                Console(`最新更新:<b style="color:red"> >>>提前更新了职教云资源库的支持,点击切换平台可选择资源库,有需要的小伙伴可以进行体验啦!</b>`);
                 Console(`如在使用过程中出现BUG等情况,可联系邮箱反馈给作者`);
                 if (typeIndex) Console(`该脚本不支持做测验题,所以会出现课程未完成但没办法全部完成子节点情况，是因为跳过了测验题，建议手动完成测验题再执行该脚本或者忽视测验题`);
                 config._Lock = false;
