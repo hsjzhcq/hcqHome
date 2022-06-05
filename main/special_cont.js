@@ -89,7 +89,7 @@
                 this.url.setProgress = "/study/directory/updateStatus"; // 视频修改进度
             }
             async getCourseLists() { //返回课程数据
-                let res = await _ajax(this.url.courseLists, { userid: localStorage.getItem("userId") });
+                let res = await _ajax(this.url.courseLists, { userid: localStorage.getItem("userId"),pageSize: 60 });
                 let list = res.list;
                 return {
                     len: list.length,
