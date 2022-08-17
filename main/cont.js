@@ -980,6 +980,7 @@
     function userInit() {
         let id = localStorage.getItem("userName") + "_v.3";
         if (localStorage.getItem("scriptID") !== id) {
+            alert('项目于2022/8/17正式停止维护,感谢大家的使用与支持!');
             localStorage.setItem("scriptID", id);
             Console("对运行环境数据初始化中。。。");
             if (localStorage.getItem("s_courseList")) localStorage.removeItem("s_courseList");
@@ -1214,11 +1215,11 @@
             <img src="http://q1.qlogo.cn/g?b=qq&nk=2533094475&s=640" alt="用户头像">
             <div class="left-item">
                 <span>用户名</span>
-                <span class="user-name text-ellipsis">有问题联系邮箱</span>
+                <span class="user-name text-ellipsis">停止更新与维护,随缘使用~</span>
             </div>
             <div class="left-item">
                 <span>学号</span>
-                <span class="stuNum text-ellipsis">不要加QQ会打扰到作者</span>
+                <span class="stuNum text-ellipsis">不能刷作业和考试!!!</span>
             </div>
             <div class="left-item">
                 <div class="switch-platform btn">
@@ -1319,7 +1320,7 @@
                 <div class="loader" data-type="jump-this">跳过本节</div>
                 <div class="loader" data-type="view">打开视图</div>
                 <div data-type="feedback">
-                    <a target="_blank" href="https://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=2533094475@qq.com">反馈意见</a>
+                    <a target="_blank" href="https://b23.tv/m82Rg1D">反馈意见</a>
                 </div>
                 <div data-type="support">支持作者</div>
                 <div data-type="changeBg">更换背景</div>
