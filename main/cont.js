@@ -187,7 +187,7 @@
                     e.childNodeList.forEach(item => {
                         unNum = null;
                         this.filterType(item, () => {
-                            unNum = `${mIndex}-${tIndex}-${i} `;
+                            unNum = `${mIndex}-${tIndex}-${i}`;
                             unNode.push(unNum);
                         }, true);
                         i++;
@@ -196,7 +196,7 @@
                 } else {
                     unNum = null;
                     this.filterType(e, () => {
-                        unNum = `${mIndex}-${tIndex}-${i} `;
+                        unNum = `${mIndex}-${tIndex}-${i}`;
                         unNode.push(unNum);
                     });
                     i++;
@@ -978,7 +978,7 @@
     }
 
     function userInit() {
-        let id = localStorage.getItem("userName") + "_v.3";
+        let id = localStorage.getItem("userName") + "_v.31";
         if (localStorage.getItem("scriptID") !== id) {
             alert('项目于2022/8/17正式停止维护,感谢大家的使用与支持!');
             localStorage.setItem("scriptID", id);
