@@ -187,7 +187,7 @@
                     e.childNodeList.forEach(item => {
                         unNum = null;
                         this.filterType(item, () => {
-                            unNum = `${mIndex} -${tIndex} -${i} `;
+                            unNum = `${mIndex}-${tIndex}-${i} `;
                             unNode.push(unNum);
                         }, true);
                         i++;
@@ -196,7 +196,7 @@
                 } else {
                     unNum = null;
                     this.filterType(e, () => {
-                        unNum = `${mIndex} -${tIndex} -${i} `;
+                        unNum = `${mIndex}-${tIndex}-${i} `;
                         unNode.push(unNum);
                     });
                     i++;
